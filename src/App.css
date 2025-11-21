@@ -1,0 +1,36 @@
+body {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(to bottom, #87CEEB, #FFFFFF);
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  justify-content: center;
+  padding-top: 2rem;
+}
+
+.word-chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  max-width: 800px;
+  width: 100%;
+}
+
+.word-chip {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  color: #000000;
+  border: 2px solid #4CAF50;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
