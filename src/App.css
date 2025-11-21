@@ -62,3 +62,35 @@ body {
 .pool-line {
   line-height: 1.2;
 }
+
+.add-word-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.1s;
+}
+
+.add-word-btn:active {
+  transform: scale(0.95);
+}
+
+.input-chip input {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  text-align: center;
+  min-width: 1ch;
+}
