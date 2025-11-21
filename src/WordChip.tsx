@@ -17,7 +17,7 @@ const WordChip: React.FC<WordChipProps> = ({ id, word }) => {
   } = useSortable({ id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
 
