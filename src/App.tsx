@@ -131,7 +131,7 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
-        setLetterPool(prev => shuffleString(prev));
+        setLetterPool(prev => shuffleString(prev.replace(/ /g, ''))); // Remove spaces before shuffling
       } else if (e.key === ' ') {
         e.preventDefault(); // Prevent default space behavior (e.g., scrolling)
         // Commit any currently editing chip and start a new one
@@ -143,21 +143,28 @@ function App() {
           updated.push({ id: newId, text: '', isEditing: true });
           return updated;
         });
+        setLetterPool(prev => prev.replace(/ /g, '')); // Remove spaces after adding new word
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const poolLines = [];
-  const lineLengths = [20, 21, 20, 21, 20];
-  let currentIndex = 0;
-
-  for (const length of lineLengths) {
-    poolLines.push(letterPool.slice(currentIndex, currentIndex + length));
-    currentIndex += length;
+  // Dynamically calculate the number of lines for the letter pool display
+  const totalChars = letterPool.length; // includes spaces as placeholders
+  const desiredLines = Math.min(5, Math.ceil(Math.sqrt(totalChars)));
+  const baseLength = Math.floor(totalChars / desiredLines);
+  const lineLengths: number[] = [];
+  for (let i = 0; i < desiredLines; i++) {
+    // Alternate longer lines (baseLength+1) to keep pattern n / n+1
+    const addOne = i % 2 === 0 ? 1 : 0;
+    lineLengths.push(baseLength + addOne);
   }
-
+  const poolLines: string[] = [];
+  let currentIndex = 0;
+  for (const len of lineLengths) {
+    poolLines.push(letterPool.slice(currentIndex, currentIndex + len));
+    currentIndex += len;
+  }
   return (
     <div className="app">
       <div className="content-wrapper">
