@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import WordChip from './WordChip';
-import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 
 function App() {
