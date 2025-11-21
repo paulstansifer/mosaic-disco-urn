@@ -105,7 +105,16 @@ function App() {
   };
 
   const handleWordCommit = (id: number) => {
-    setWords(words.map(w => w.id === id ? { ...w, isEditing: false } : w));
+    setWords(prev => {
+      const target = prev.find(w => w.id === id);
+      if (!target) return prev;
+      // If the chip has no characters, discard it
+      if (target.text.trim().length === 0) {
+        return prev.filter(w => w.id !== id);
+      }
+      // Otherwise, mark it as not editing
+      return prev.map(w => w.id === id ? { ...w, isEditing: false } : w);
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -123,9 +132,19 @@ function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         setLetterPool(prev => shuffleString(prev));
+      } else if (e.key === ' ') {
+        e.preventDefault(); // Prevent default space behavior (e.g., scrolling)
+        // Commit any currently editing chip and start a new one
+        setWords(prev => {
+          // Finish editing any chip that is in editing mode
+          const updated = prev.map(w => w.isEditing ? { ...w, isEditing: false } : w);
+          const newId = Math.max(0, ...updated.map(w => w.id)) + 1;
+          // Add a new chip in editing mode
+          updated.push({ id: newId, text: '', isEditing: true });
+          return updated;
+        });
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
