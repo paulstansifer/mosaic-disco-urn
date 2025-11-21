@@ -34,3 +34,31 @@ body {
   user-select: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.letter-pool {
+  font-family: 'Lucida Console', monospace;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  border-radius: 8px;
+  white-space: pre;
+}
+
+.pool-line {
+  line-height: 1.2;
+}
