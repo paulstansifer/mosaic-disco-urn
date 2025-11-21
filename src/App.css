@@ -15,7 +15,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: 5px;
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -25,12 +25,12 @@ body {
 }
 
 .word-chip {
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
   background-color: #FFFFFF;
   color: #000000;
-  border: 2px solid #4CAF50;
+  border: 2px solid #4CAF5077;
   cursor: grab;
   user-select: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
