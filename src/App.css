@@ -33,6 +33,22 @@ body {
   cursor: grab;
   user-select: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s ease;
+}
+
+.word-chip.destroyed {
+  animation: destroy 0.5s forwards;
+}
+
+@keyframes destroy {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.5);
+  }
 }
 
 .content-wrapper {

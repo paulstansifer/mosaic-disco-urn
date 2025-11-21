@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import App from './App';
@@ -89,7 +89,9 @@ describe('App Interaction', () => {
 
         // "Today" should be gone (or at least modified/removed).
         // Our logic removes the whole word.
-        expect(screen.queryByText('Today')).not.toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.queryByText('Today')).not.toBeInTheDocument();
+        });
 
         const input = screen.getByRole('textbox');
         expect(input).toHaveValue('T');

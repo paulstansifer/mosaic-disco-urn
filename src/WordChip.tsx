@@ -6,11 +6,12 @@ interface WordChipProps {
   id: number;
   word: string;
   isEditing?: boolean;
+  isDestroyed?: boolean;
   onUpdate?: (newText: string) => void;
   onCommit?: () => void;
 }
 
-const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, onUpdate, onCommit }) => {
+const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, isDestroyed, onUpdate, onCommit }) => {
   const {
     attributes,
     listeners,
@@ -50,7 +51,7 @@ const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, onUpdate, onCo
       style={style}
       {...attributes}
       {...listeners}
-      className="word-chip"
+      className={`word-chip ${isDestroyed ? 'destroyed' : ''}`}
     >
       {word}
     </div>

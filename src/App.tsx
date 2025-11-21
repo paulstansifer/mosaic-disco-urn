@@ -5,7 +5,7 @@ import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 
 function App() {
-  const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean }>>(
+  const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(
     ['Today', 'is', 'a', 'beautiful', 'day', 'to', 'be', 'stomping', 'on', 'things']
       .map((word, index) => ({ id: index + 1, text: word }))
   );
@@ -85,7 +85,19 @@ function App() {
           tempPool = updatePoolRemove(tempPool, char)!;
 
           setLetterPool(tempPool);
-          setWords(words.filter(w => w.id !== stolenWord.id).map(w => w.id === id ? { ...w, text: newText } : w));
+          setWords(prev => prev.map(w => {
+            if (w.id === stolenWord.id) {
+              return { ...w, isDestroyed: true };
+            }
+            if (w.id === id) {
+              return { ...w, text: newText };
+            }
+            return w;
+          }));
+
+          setTimeout(() => {
+            setWords(prev => prev.filter(w => w.id !== stolenWord.id));
+          }, 500);
         }
       }
     } else if (newText.length < oldText.length) {
@@ -104,17 +116,20 @@ function App() {
     }
   };
 
+  const handleDestroyWord = (id: number) => {
+    setWords(prev => prev.map(w => w.id === id ? { ...w, isDestroyed: true } : w));
+    setTimeout(() => {
+      setWords(prev => prev.filter(w => w.id !== id));
+    }, 500); // Animation duration
+  };
+
   const handleWordCommit = (id: number) => {
-    setWords(prev => {
-      const target = prev.find(w => w.id === id);
-      if (!target) return prev;
-      // If the chip has no characters, discard it
-      if (target.text.trim().length === 0) {
-        return prev.filter(w => w.id !== id);
-      }
-      // Otherwise, mark it as not editing
-      return prev.map(w => w.id === id ? { ...w, isEditing: false } : w);
-    });
+    const word = words.find(w => w.id === id);
+    if (word && word.text.trim().length === 0) {
+      handleDestroyWord(id);
+    } else {
+      setWords(prev => prev.map(w => w.id === id ? { ...w, isEditing: false } : w));
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -177,6 +192,7 @@ function App() {
                   id={word.id}
                   word={word.text}
                   isEditing={word.isEditing}
+                  isDestroyed={word.isDestroyed}
                   onUpdate={(text) => handleWordUpdate(word.id, text)}
                   onCommit={() => handleWordCommit(word.id)}
                 />
