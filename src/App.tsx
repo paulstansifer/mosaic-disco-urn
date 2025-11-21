@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import WordChip from './WordChip';
-import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragEndEvent, useSensor, useSensors, TouchSensor, MouseSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 
 function App() {
@@ -180,10 +180,22 @@ function App() {
     poolLines.push(letterPool.slice(currentIndex, currentIndex + len));
     currentIndex += len;
   }
+
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, {
+      // Press delay of 250ms, with a tolerance of 5px of movement
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+  );
+
   return (
     <div className="app">
       <div className="content-wrapper">
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={words} strategy={horizontalListSortingStrategy}>
             <div className="word-chip-container">
               {words.map(word => (
