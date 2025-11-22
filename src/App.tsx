@@ -9,7 +9,6 @@ function App() {
     ['Today', 'is', 'a', 'beautiful', 'day', 'to', 'be', 'stomping', 'on', 'things']
       .map((word, index) => ({ id: index + 1, text: word }))
   );
-  const [destroyedWords, setDestroyedWords] = useState<Array<{ id: number; text: string }>>([]);
 
   const INITIAL_POOL = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
 
@@ -118,13 +117,8 @@ function App() {
   };
 
   const handleDestroyWord = (id: number) => {
-    const wordToDestroy = words.find(w => w.id === id);
-    if (!wordToDestroy) return;
-
     setWords(prev => prev.map(w => w.id === id ? { ...w, isDestroyed: true } : w));
-
     setTimeout(() => {
-      setDestroyedWords(prev => [...prev, { id: wordToDestroy.id, text: wordToDestroy.text }]);
       setWords(prev => prev.filter(w => w.id !== id));
     }, 500); // Animation duration
   };
@@ -135,40 +129,6 @@ function App() {
       handleDestroyWord(id);
     } else {
       setWords(prev => prev.map(w => w.id === id ? { ...w, isEditing: false } : w));
-    }
-  };
-
-  const handleDeleteWord = (id: number) => {
-    const wordToDelete = words.find(w => w.id === id);
-    if (wordToDelete) {
-      let newLetterPool = letterPool;
-      for (const char of wordToDelete.text) {
-        newLetterPool = updatePoolAdd(newLetterPool, char);
-      }
-      setLetterPool(newLetterPool);
-      handleDestroyWord(id);
-    }
-  };
-
-  const handleRestoreWord = (id: number) => {
-    const wordToRestore = destroyedWords.find(w => w.id === id);
-    if (wordToRestore) {
-      let tempPool = letterPool;
-      let canRestore = true;
-      for (const char of wordToRestore.text) {
-        const newPool = updatePoolRemove(tempPool, char);
-        if (newPool === null) {
-          canRestore = false;
-          break;
-        }
-        tempPool = newPool;
-      }
-
-      if (canRestore) {
-        setLetterPool(tempPool);
-        setWords(prev => [...prev, wordToRestore]);
-        setDestroyedWords(prev => prev.filter(w => w.id !== id));
-      }
     }
   };
 
@@ -247,7 +207,6 @@ function App() {
                   isDestroyed={word.isDestroyed}
                   onUpdate={(text) => handleWordUpdate(word.id, text)}
                   onCommit={() => handleWordCommit(word.id)}
-                  onClick={() => handleDeleteWord(word.id)}
                 />
               ))}
             </div>
@@ -263,20 +222,6 @@ function App() {
               </div>
             ))}
           </div>
-        </div>
-        <div className="graveyard-section">
-          <div className="graveyard-column">
-            {destroyedWords.map(word => (
-              <WordChip
-                key={word.id}
-                id={word.id}
-                word={word.text}
-                onClick={() => handleRestoreWord(word.id)}
-              />
-            ))}
-          </div>
-          <div className="graveyard-column"></div>
-          <div className="graveyard-column"></div>
         </div>
       </div>
     </div>

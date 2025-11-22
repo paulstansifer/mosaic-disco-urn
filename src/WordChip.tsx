@@ -9,10 +9,9 @@ interface WordChipProps {
   isDestroyed?: boolean;
   onUpdate?: (newText: string) => void;
   onCommit?: () => void;
-  onClick?: () => void;
 }
 
-const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, isDestroyed, onUpdate, onCommit, onClick }) => {
+const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, isDestroyed, onUpdate, onCommit }) => {
   const {
     attributes,
     listeners,
@@ -47,16 +46,15 @@ const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, isDestroyed, o
   }
 
   return (
-    <button
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       className={`word-chip ${isDestroyed ? 'destroyed' : ''}`}
-      onClick={onClick}
     >
       {word}
-    </button>
+    </div>
   );
 };
 

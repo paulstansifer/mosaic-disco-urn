@@ -44,9 +44,6 @@ body {
   user-select: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.25s ease;
-  font-family: inherit;
-  font-size: inherit;
-  text-align: inherit;
 }
 
 .word-chip.destroyed {
@@ -122,23 +119,4 @@ body {
   outline: none;
   text-align: center;
   min-width: 1ch;
-}
-
-.graveyard-section {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 800px;
-  margin-top: 20px;
-}
-
-.graveyard-column {
-  width: 32%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
