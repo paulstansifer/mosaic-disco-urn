@@ -3714,7 +3714,6 @@ wither
 woah
 woohoo
 wrist
-y
 yawn
 yay
 yea
@@ -3757,7 +3756,6 @@ ahhhhh
 aided
 aie
 aisle
-ak
 akes
 ako
 alas
@@ -3824,7 +3822,6 @@ audits
 aunt
 auntie
 autobio
-av
 avenge
 avenues
 aviator
@@ -3837,8 +3834,6 @@ awfull
 awhile
 ayar
 ayn
-baaaa
-baaaack
 bab
 baboons
 babysat
@@ -3892,7 +3887,6 @@ becuase
 bedbugs
 beds
 bee
-beee
 beets
 befriend
 beg
@@ -4075,7 +4069,6 @@ center
 ceral
 cetera
 cette
-ch
 chained
 charges
 chart
@@ -4130,7 +4123,6 @@ closure
 clowns
 clubbing
 clusters
-co
 coastal
 coaster
 coasting
@@ -4149,7 +4141,6 @@ collided
 colony
 colors
 colossus
-colur
 con
 condense
 confetti
@@ -4253,7 +4244,6 @@ dawg
 dawned
 dayyy
 dayyyy
-dc
 deafness
 dearly
 deathly
@@ -4302,7 +4292,6 @@ dialect
 dickens
 dictated
 dictator
-didthe
 diffused
 digested
 dilton
@@ -4345,7 +4334,6 @@ donor
 dont
 doodled
 doorbell
-dor
 dorothy
 dots
 dotted
@@ -4372,7 +4360,6 @@ drools
 droste
 drove
 drowns
-du
 ducks
 ducts
 dud
@@ -4381,7 +4368,6 @@ duhhhhh
 duke
 dundee
 dunn
-dunoo
 duracell
 duration
 durian
@@ -4437,7 +4423,6 @@ entity
 entrails
 entriely
 entries
-enuf
 enviable
 era
 erase
@@ -4449,16 +4434,13 @@ err
 errand
 errors
 ery
-es
 eschews
 escort
 ess
 ethereal
 ethic
 ethnic
-eu
 eugenic
-ev
 evar
 evenly
 evens
@@ -4467,7 +4449,6 @@ everday
 evern
 evoked
 evoking
-ew
 ewe
 eyelid
 eys
@@ -4503,7 +4484,6 @@ fetishes
 fetus
 feuds
 fevered
-fi
 fianc
 fiddle
 fide
@@ -4519,7 +4499,6 @@ firstly
 fishbowl
 fits
 fiver
-fl
 flabby
 flags
 flakes
@@ -4544,7 +4523,6 @@ flunking
 fluoride
 flutters
 flyers
-fo
 focuses
 fold
 foley
@@ -4570,7 +4548,6 @@ fours
 fouth
 fracture
 fran
-fre
 freaked
 freefall
 freegans
@@ -4584,7 +4561,6 @@ frontier
 frosting
 fruitful
 fruition
-fu
 fubsier
 fubsiest
 fucked
@@ -4611,7 +4587,6 @@ gaseous
 gasoline
 gather
 gathered
-gee
 genie
 genuine
 gestures
@@ -4724,9 +4699,6 @@ hellow
 hen
 hers
 hesitant
-heyelled
-hhuuh
-hiftory
 highly
 highs
 hiking
@@ -4757,7 +4729,6 @@ honoring
 hooded
 hoof
 hooked
-hooow
 hoot
 horn
 horray
@@ -4773,8 +4744,6 @@ housing
 hovering
 howdy
 hoy
-hs
-hte
 hugely
 hugses
 hunch
@@ -4829,7 +4798,6 @@ isaac
 ish
 iskasht
 islands
-isnt
 issued
 itch
 kade
@@ -4842,7 +4810,6 @@ kelvin
 kenny
 kente
 ketubah
-kewl
 kidneys
 kinder
 kindly
@@ -4908,7 +4875,6 @@ lesbains
 lessen
 lessens
 lettuce
-li
 liars
 liberal
 lick
@@ -4962,16 +4928,11 @@ lurid
 lust
 lusting
 lusts
-lvc
-lyfe
-na
 nabokov
 nachos
 nadir
-nah
 nail
 nailed
-naivet
 nano
 narator
 narrate
@@ -5005,8 +4966,6 @@ nick
 nickel
 nicotine
 niece
-nig
-niiiice
 nines
 ninety
 nisti
@@ -5061,7 +5020,6 @@ oni
 onions
 onstage
 ony
-ooo
 oooooh
 orbital
 orc
@@ -5072,8 +5030,6 @@ orgy
 ornate
 ornery
 ossified
-otu
-ou
 outback
 outbids
 outburst
@@ -5202,7 +5158,6 @@ robs
 rocked
 rodents
 rods
-rofl
 rogers
 rogue
 roller
@@ -5215,9 +5170,7 @@ roughly
 rowboat
 royal
 rreguar
-rrr
 rrrawl
-rts
 rubbery
 rubble
 rube
@@ -5301,7 +5254,6 @@ seventy
 severely
 sewer
 sewn
-sh
 shackled
 shackles
 shades
@@ -5346,7 +5298,6 @@ shrub
 shrugs
 shuck
 shudda
-si
 sicker
 sided
 sideways
@@ -5412,8 +5363,6 @@ soulful
 southern
 soviet
 soviets
-sry
-sshhh
 stable
 stacked
 staid
@@ -5538,8 +5487,6 @@ tasks
 tasting
 tats
 tattooed
-tbs
-te
 teachah
 teal
 teally
@@ -5553,7 +5500,6 @@ tenses
 tensions
 tenth
 terrific
-tes
 tesla
 testify
 tetris
@@ -5593,10 +5539,8 @@ tis
 titanic
 titans
 titular
-tng
 toddlers
 togetehr
-toi
 toiling
 tokens
 tokyo
@@ -5620,7 +5564,6 @@ tova
 towel
 towering
 towns
-tr
 tra
 trace
 traced
@@ -5660,19 +5603,15 @@ twincest
 twisting
 tyler
 tyranny
-ug
 uglier
 ugliest
-uhf
 uhh
-uk
 uncles
 uncouth
 uncovers
 underdog
 undergo
 undid
-une
 unerotic
 unhinged
 unicorns
@@ -5688,8 +5627,6 @@ unwashed
 urbane
 urge
 urinary
-usr
-ut
 utaught
 uterus
 uvular
@@ -5703,7 +5640,6 @@ vary
 vass
 vault
 vcr
-ve
 veers
 vehicles
 veneer
@@ -5755,11 +5691,9 @@ vowel
 vowing
 voyage
 vulture
-w
 wack
 wag
 wager
-waht
 waitress
 walker
 walkie
@@ -5791,11 +5725,9 @@ weighted
 weirdest
 wellness
 wells
-wer
 werner
 whaa
 whats
-whe
 whedon
 wheel
 wheelie
@@ -5866,8 +5798,6 @@ wrode
 wrongs
 wrought
 wryly
-wut
-ww
 wycliffe
 wyld
 yaaaay
