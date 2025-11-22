@@ -1,8 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import WordChip from './WordChip';
 import { DndContext, closestCenter, type DragEndEvent, useSensor, useSensors, TouchSensor, MouseSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import allowedWordsRaw from './allowed_words.txt?raw';
+
+const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+
+const canFormWord = (word: string, pool: string) => {
+  const poolCounts: Record<string, number> = {};
+  for (const char of pool) {
+    if (char !== ' ') {
+      poolCounts[char] = (poolCounts[char] || 0) + 1;
+    }
+  }
+
+  for (const char of word) {
+    if (!poolCounts[char]) return false;
+    poolCounts[char]--;
+  }
+  return true;
+};
 
 function App() {
   const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(
@@ -192,6 +210,34 @@ function App() {
     }),
   );
 
+  const suggestedWords = useMemo(() => {
+    const validWords = [];
+    for (const word of ALLOWED_WORDS) {
+      if (canFormWord(word, letterPool)) {
+        validWords.push(word);
+        if (validWords.length >= 30) break;
+      }
+    }
+    return validWords;
+  }, [letterPool]);
+
+  const handleSuggestedClick = (word: string) => {
+    // Add word to words list
+    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
+    setWords(prev => [...prev, { id: newId, text: word, isEditing: false }]);
+
+    // Remove letters from pool
+    let newPool = letterPool;
+    for (const char of word) {
+      const updated = updatePoolRemove(newPool, char);
+      if (updated !== null) {
+        newPool = updated;
+      }
+    }
+    // Clear spaces from the pool
+    setLetterPool(newPool.replace(/ /g, ''));
+  };
+
   return (
     <div className="app">
       <div className="content-wrapper">
@@ -221,6 +267,22 @@ function App() {
                 {line.split('').join(' ')}
               </div>
             ))}
+          </div>
+
+          <div className="suggestions-grid">
+            <div className="suggestion-col"></div>
+            <div className="suggestion-col center">
+              {suggestedWords.map((word, index) => (
+                <button
+                  key={`${word}-${index}`}
+                  className="suggestion-chip"
+                  onClick={() => handleSuggestedClick(word)}
+                >
+                  {word}
+                </button>
+              ))}
+            </div>
+            <div className="suggestion-col"></div>
           </div>
         </div>
       </div>
