@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
-import WordChip from './WordChip';
-import { DndContext, closestCenter, type DragEndEvent, type DragStartEvent, useSensor, useSensors, TouchSensor, MouseSensor, useDroppable, DragOverlay, defaultDropAnimationSideEffects, type DropAnimation } from '@dnd-kit/core';
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import allowedWordsRaw from './allowed_words.txt?raw';
+import LetterPool from './LetterPool';
+import SuggestionColumns from './SuggestionColumns';
+import SentenceBuilder from './SentenceBuilder';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 
@@ -21,21 +23,6 @@ const canFormWord = (word: string, pool: string) => {
   }
   return true;
 };
-
-function TrashDropZone() {
-  const { isOver, setNodeRef } = useDroppable({
-    id: 'trash-drop-zone',
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`trash-drop-zone ${isOver ? 'over' : ''}`}
-    >
-      🗑️
-    </div>
-  );
-}
 
 function App() {
   const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(
@@ -228,33 +215,6 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-  // Dynamically calculate the number of lines for the letter pool display
-  const totalChars = letterPool.length; // includes spaces as placeholders
-  const desiredLines = Math.min(5, Math.ceil(Math.sqrt(totalChars)));
-  const baseLength = Math.floor(totalChars / desiredLines);
-  const lineLengths: number[] = [];
-  for (let i = 0; i < desiredLines; i++) {
-    // Alternate longer lines (baseLength+1) to keep pattern n / n+1
-    const addOne = i % 2 === 0 ? 1 : 0;
-    lineLengths.push(baseLength + addOne);
-  }
-  const poolLines: string[] = [];
-  let currentIndex = 0;
-  for (const len of lineLengths) {
-    poolLines.push(letterPool.slice(currentIndex, currentIndex + len));
-    currentIndex += len;
-  }
-
-  const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor, {
-      // Press delay of 250ms, with a tolerance of 5px of movement
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
-    }),
-  );
 
   const suggestedWords = useMemo(() => {
     const validWords = [];
@@ -309,93 +269,31 @@ function App() {
     setLetterPool(newPool);
   };
 
-  const dropAnimation: DropAnimation = {
-    sideEffects: defaultDropAnimationSideEffects({
-      styles: {
-        active: {
-          opacity: '0.5',
-        },
-      },
-    }),
-  };
-
   return (
     <div className="app">
       <div className="content-wrapper">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
+        <SentenceBuilder
+          words={words}
+          activeId={activeId}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-        >
-          <div className="word-row">
-            <SortableContext items={words} strategy={horizontalListSortingStrategy}>
-              <div className="word-chip-container">
-                {words.map(word => (
-                  <WordChip
-                    key={word.id}
-                    id={word.id}
-                    word={word.text}
-                    isEditing={word.isEditing}
-                    isDestroyed={word.isDestroyed}
-                    isDragging={activeId === word.id}
-                    onUpdate={(text) => handleWordUpdate(word.id, text)}
-                    onCommit={() => handleWordCommit(word.id)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-            <TrashDropZone />
-          </div>
-          <DragOverlay dropAnimation={dropAnimation}>
-            {activeId ? (
-              <div className="word-chip" style={{ cursor: 'grabbing' }}>
-                {words.find(w => w.id === activeId)?.text}
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+          onWordUpdate={handleWordUpdate}
+          onWordCommit={handleWordCommit}
+        />
 
         <div className="input-section">
           <button className="add-word-btn" onClick={handleAddWord}>+</button>
-          <div className="letter-pool">
-            {poolLines.map((line, index) => (
-              <div key={index} className="pool-line">
-                {line.split('').join(' ')}
-              </div>
-            ))}
-          </div>
-
-          <div className="suggestions-grid">
-            <div className="suggestion-col center">
-              {deletedWords.map((word, index) => (
-                <button
-                  key={`deleted-${index}`}
-                  className="suggestion-chip"
-                 style={{ opacity: 0.7 }}
-                  onClick={() => handleDeletedWordClick(word)}
-                >
-                 {word}
-                </button>
-              ))}
-            </div>
-            <div className="suggestion-col center">
-              {suggestedWords.map((word, index) => (
-                <button
-                  key={`${word}-${index}`}
-                  className="suggestion-chip"
-                  onClick={() => handleSuggestedClick(word)}
-                >
-                  {word}
-                </button>
-              ))}
-            </div>
-            <div className="suggestion-col"></div>
-          </div>
-        </div> 
-      </div> 
-    </div> 
-  ); 
+          <LetterPool letterPool={letterPool} />
+          <SuggestionColumns
+            deletedWords={deletedWords}
+            suggestedWords={suggestedWords}
+            onDeletedWordClick={handleDeletedWordClick}
+            onSuggestedClick={handleSuggestedClick}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default App;
