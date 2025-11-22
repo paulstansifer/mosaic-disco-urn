@@ -67,74 +67,119 @@ function App() {
     if (wordIndex === -1) return;
     const oldText = words[wordIndex].text;
 
-    if (newText.length > oldText.length) {
-      // Character added
-      let char = '';
-      for (let i = 0; i < newText.length; i++) {
-        if (newText[i] !== oldText[i]) {
-          char = newText[i];
-          break;
+    // 1. Return old letters to a temporary pool
+    let currentPool = letterPool;
+    for (const char of oldText) {
+      currentPool = updatePoolAdd(currentPool, char);
+    }
+
+    const wordsToDestroyIds = new Set<number>();
+    const parts = newText.split(' ');
+    const processedParts: { text: string, isNew: boolean }[] = [];
+
+    // Helper to form string with stealing logic
+    const formString = (target: string) => {
+      let formed = '';
+      for (const char of target) {
+        const poolAfterRemove = updatePoolRemove(currentPool, char);
+        if (poolAfterRemove !== null) {
+          currentPool = poolAfterRemove;
+          formed += char;
+        } else {
+          // Try to steal
+          let stolenId = -1;
+          // Search reverse to steal from newest words first
+          for (let i = words.length - 1; i >= 0; i--) {
+            const w = words[i];
+            // Don't steal from self (id), or already destroyed/marked words
+            if (w.id !== id && !wordsToDestroyIds.has(w.id) && w.text.includes(char)) {
+              stolenId = w.id;
+              break;
+            }
+          }
+
+          if (stolenId !== -1) {
+            wordsToDestroyIds.add(stolenId);
+            const victim = words.find(w => w.id === stolenId)!;
+            // Return victim's letters
+            for (const c of victim.text) {
+              currentPool = updatePoolAdd(currentPool, c);
+            }
+            // Take the char
+            currentPool = updatePoolRemove(currentPool, char)!;
+            formed += char;
+          }
+          // If we can't steal, we skip the char (it doesn't get added)
         }
       }
-      if (!char) return;
+      return formed;
+    };
 
-      // Try to take from pool
-      let newPool = updatePoolRemove(letterPool, char);
+    // Process all parts of the new text
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      // Skip empty parts resulting from multiple spaces, but always process the first part (even if empty)
+      if (i > 0 && part === "") continue;
 
-      if (newPool !== null) {
-        setLetterPool(newPool);
-        setWords(words.map(w => w.id === id ? { ...w, text: newText } : w));
+      const formed = formString(part);
+      processedParts.push({ text: formed, isNew: i > 0 });
+    }
+
+    // Apply updates to state
+    setLetterPool(currentPool);
+
+    setWords(prev => {
+      const newWords = [...prev];
+      const idx = newWords.findIndex(w => w.id === id);
+      if (idx === -1) return prev;
+
+      const replacements: typeof words = [];
+      let nextId = Math.max(0, ...newWords.map(w => w.id)) + 1;
+
+      if (processedParts.length > 0) {
+        // The first part updates the existing word
+        replacements.push({
+          ...newWords[idx],
+          text: processedParts[0].text,
+          isEditing: processedParts.length === 1 // Keep editing if it's the only one
+        });
+
+        // Subsequent parts become new words
+        for (let i = 1; i < processedParts.length; i++) {
+          replacements.push({
+            id: nextId++,
+            text: processedParts[i].text,
+            isEditing: true
+          });
+        }
+
+        // If we split into multiple words, ensure only the last one is in editing mode
+        if (processedParts.length > 1) {
+          replacements.forEach((r, i) => {
+            r.isEditing = (i === replacements.length - 1);
+          });
+        }
       } else {
-        // Steal logic
-        const wordsCopy = [...words];
-        let stolenIndex = -1;
-        // Search reverse, excluding current
-        for (let i = wordsCopy.length - 1; i >= 0; i--) {
-          if (wordsCopy[i].id !== id && wordsCopy[i].text.includes(char)) {
-            stolenIndex = i;
-            break;
-          }
-        }
-
-        if (stolenIndex !== -1) {
-          const stolenWord = wordsCopy[stolenIndex];
-          let tempPool = letterPool;
-          // Return stolen letters
-          for (const c of stolenWord.text) {
-            tempPool = updatePoolAdd(tempPool, c);
-          }
-          // Take needed char
-          tempPool = updatePoolRemove(tempPool, char)!;
-
-          setLetterPool(tempPool);
-          setWords(prev => prev.map(w => {
-            if (w.id === stolenWord.id) {
-              return { ...w, isDestroyed: true };
-            }
-            if (w.id === id) {
-              return { ...w, text: newText };
-            }
-            return w;
-          }));
-
-          setTimeout(() => {
-            setWords(prev => prev.filter(w => w.id !== stolenWord.id));
-          }, 500);
-        }
+        // Should not strictly happen with split logic, but safe fallback
+        replacements.push({ ...newWords[idx], text: '' });
       }
-    } else if (newText.length < oldText.length) {
-      // Character removed
-      let char = '';
-      for (let i = 0; i < oldText.length; i++) {
-        if (oldText[i] !== newText[i]) {
-          char = oldText[i];
-          break;
+
+      // Replace the original word with the new sequence
+      newWords.splice(idx, 1, ...replacements);
+
+      // Mark destroyed words
+      return newWords.map(w => {
+        if (wordsToDestroyIds.has(w.id)) {
+          return { ...w, isDestroyed: true };
         }
-      }
-      if (char) {
-        setLetterPool(prev => updatePoolAdd(prev, char));
-        setWords(words.map(w => w.id === id ? { ...w, text: newText } : w));
-      }
+        return w;
+      });
+    });
+
+    if (wordsToDestroyIds.size > 0) {
+      setTimeout(() => {
+        setWords(prev => prev.filter(w => !wordsToDestroyIds.has(w.id)));
+      }, 500);
     }
   };
 
@@ -216,6 +261,96 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      e.preventDefault();
+      const text = e.clipboardData?.getData('text');
+      if (!text) return;
+
+      let currentPool = letterPool;
+      const wordsToDestroyIds = new Set<number>();
+      const parts = text.split(/\s+/);
+      const newWordsToAdd: { text: string }[] = [];
+
+      const formString = (target: string) => {
+        let formed = '';
+        for (const char of target) {
+          const poolAfterRemove = updatePoolRemove(currentPool, char);
+          if (poolAfterRemove !== null) {
+            currentPool = poolAfterRemove;
+            formed += char;
+          } else {
+            // Try to steal
+            let stolenId = -1;
+            for (let i = words.length - 1; i >= 0; i--) {
+              const w = words[i];
+              if (!wordsToDestroyIds.has(w.id) && w.text.includes(char)) {
+                stolenId = w.id;
+                break;
+              }
+            }
+
+            if (stolenId !== -1) {
+              wordsToDestroyIds.add(stolenId);
+              const victim = words.find(w => w.id === stolenId)!;
+              for (const c of victim.text) {
+                currentPool = updatePoolAdd(currentPool, c);
+              }
+              currentPool = updatePoolRemove(currentPool, char)!;
+              formed += char;
+            }
+          }
+        }
+        return formed;
+      };
+
+      for (const part of parts) {
+        if (!part) continue;
+        const formed = formString(part);
+        if (formed) {
+          newWordsToAdd.push({ text: formed });
+        }
+      }
+
+      if (newWordsToAdd.length > 0) {
+        setLetterPool(currentPool);
+        setWords(prev => {
+          const newWords = [...prev];
+          let nextId = Math.max(0, ...newWords.map(w => w.id)) + 1;
+
+          for (const newWord of newWordsToAdd) {
+            newWords.push({
+              id: nextId++,
+              text: newWord.text,
+              isEditing: false
+            });
+          }
+
+          return newWords.map(w => {
+            if (wordsToDestroyIds.has(w.id)) {
+              return { ...w, isDestroyed: true };
+            }
+            return w;
+          });
+        });
+
+        if (wordsToDestroyIds.size > 0) {
+          setTimeout(() => {
+            setWords(prev => prev.filter(w => !wordsToDestroyIds.has(w.id)));
+          }, 500);
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [letterPool, words]);
+
   const suggestedWords = useMemo(() => {
     const validWords = [];
     for (const word of ALLOWED_WORDS) {
@@ -245,11 +380,56 @@ function App() {
   };
 
   const handleDeletedWordClick = (word: string) => {
-    // Add word back to words list
-    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
-    setWords(prev => [...prev, { id: newId, text: word, isEditing: false }]);
+    let currentPool = letterPool;
+    const wordsToDestroyIds = new Set<number>();
 
-    // Remove from deleted stack
+    // Check if we can form the word (including stealing)
+    for (const char of word) {
+      const poolAfterRemove = updatePoolRemove(currentPool, char);
+
+      if (poolAfterRemove !== null) {
+        currentPool = poolAfterRemove;
+      } else {
+        // Try to steal
+        let stolenId = -1;
+        for (let i = words.length - 1; i >= 0; i--) {
+          if (!wordsToDestroyIds.has(words[i].id) && words[i].text.includes(char)) {
+            stolenId = words[i].id;
+            break;
+          }
+        }
+
+        if (stolenId !== -1) {
+          wordsToDestroyIds.add(stolenId);
+          const victim = words.find(w => w.id === stolenId)!;
+
+          // Return letters to pool
+          for (const c of victim.text) {
+            currentPool = updatePoolAdd(currentPool, c);
+          }
+
+          // Take the char
+          currentPool = updatePoolRemove(currentPool, char)!;
+        } else {
+          // Cannot form word
+          return;
+        }
+      }
+    }
+
+    // Success - apply changes
+    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
+
+    setWords(prev => {
+      const newWords = [...prev, { id: newId, text: word, isEditing: false }];
+      return newWords.map(w => {
+        if (wordsToDestroyIds.has(w.id)) {
+          return { ...w, isDestroyed: true };
+        }
+        return w;
+      });
+    });
+
     setDeletedWords(prev => {
       const index = prev.indexOf(word);
       if (index === -1) return prev;
@@ -258,15 +438,13 @@ function App() {
       return newStack;
     });
 
-    // Remove letters from pool (since they were returned when deleted)
-    let newPool = letterPool;
-    for (const char of word) {
-      const updated = updatePoolRemove(newPool, char);
-      if (updated !== null) {
-        newPool = updated;
-      }
+    setLetterPool(currentPool);
+
+    if (wordsToDestroyIds.size > 0) {
+      setTimeout(() => {
+        setWords(prev => prev.filter(w => !wordsToDestroyIds.has(w.id)));
+      }, 500);
     }
-    setLetterPool(newPool);
   };
 
   return (
