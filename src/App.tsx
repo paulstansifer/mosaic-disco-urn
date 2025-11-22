@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import WordChip from './WordChip';
-import { DndContext, closestCenter, type DragEndEvent, useSensor, useSensors, TouchSensor, MouseSensor } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragEndEvent, type DragStartEvent, useSensor, useSensors, TouchSensor, MouseSensor, useDroppable, DragOverlay, defaultDropAnimationSideEffects, type DropAnimation } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import allowedWordsRaw from './allowed_words.txt?raw';
 
@@ -22,6 +22,21 @@ const canFormWord = (word: string, pool: string) => {
   return true;
 };
 
+function TrashDropZone() {
+  const { isOver, setNodeRef } = useDroppable({
+    id: 'trash-drop-zone',
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`trash-drop-zone ${isOver ? 'over' : ''}`}
+    >
+      🗑️
+    </div>
+  );
+}
+
 function App() {
   const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(
     ['Today', 'is', 'a', 'beautiful', 'day', 'to', 'be', 'stomping', 'on', 'things']
@@ -40,6 +55,8 @@ function App() {
   };
 
   const [letterPool, setLetterPool] = useState(() => shuffleString(INITIAL_POOL));
+  const [deletedWords, setDeletedWords] = useState<string[]>([]);
+  const [activeId, setActiveId] = useState<number | null>(null);
 
   const updatePoolRemove = (pool: string, char: string) => {
     const index = pool.indexOf(char);
@@ -141,6 +158,24 @@ function App() {
     }, 500); // Animation duration
   };
 
+  const handleWordDelete = (id: number) => {
+    const wordToDelete = words.find(w => w.id === id);
+    if (!wordToDelete) return;
+
+    // Add to deleted stack
+    setDeletedWords(prev => [wordToDelete.text, ...prev].slice(0, 20));
+
+    // Return letters to pool
+    let newPool = letterPool;
+    for (const char of wordToDelete.text) {
+      newPool = updatePoolAdd(newPool, char);
+    }
+    setLetterPool(newPool);
+
+    // Remove from words list
+    handleDestroyWord(id);
+  };
+
   const handleWordCommit = (id: number) => {
     const word = words.find(w => w.id === id);
     if (word && word.text.trim().length === 0) {
@@ -150,8 +185,19 @@ function App() {
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as number);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
+
+    if (over && over.id === 'trash-drop-zone') {
+      handleWordDelete(active.id as number);
+      return;
+    }
+
     if (over && active.id !== over.id) {
       setWords((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
@@ -238,25 +284,76 @@ function App() {
     setLetterPool(newPool.replace(/ /g, ''));
   };
 
+  const handleDeletedWordClick = (word: string) => {
+    // Add word back to words list
+    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
+    setWords(prev => [...prev, { id: newId, text: word, isEditing: false }]);
+
+    // Remove from deleted stack
+    setDeletedWords(prev => {
+      const index = prev.indexOf(word);
+      if (index === -1) return prev;
+      const newStack = [...prev];
+      newStack.splice(index, 1);
+      return newStack;
+    });
+
+    // Remove letters from pool (since they were returned when deleted)
+    let newPool = letterPool;
+    for (const char of word) {
+      const updated = updatePoolRemove(newPool, char);
+      if (updated !== null) {
+        newPool = updated;
+      }
+    }
+    setLetterPool(newPool);
+  };
+
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: '0.5',
+        },
+      },
+    }),
+  };
+
   return (
     <div className="app">
       <div className="content-wrapper">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={words} strategy={horizontalListSortingStrategy}>
-            <div className="word-chip-container">
-              {words.map(word => (
-                <WordChip
-                  key={word.id}
-                  id={word.id}
-                  word={word.text}
-                  isEditing={word.isEditing}
-                  isDestroyed={word.isDestroyed}
-                  onUpdate={(text) => handleWordUpdate(word.id, text)}
-                  onCommit={() => handleWordCommit(word.id)}
-                />
-              ))}
-            </div>
-          </SortableContext>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="word-row">
+            <SortableContext items={words} strategy={horizontalListSortingStrategy}>
+              <div className="word-chip-container">
+                {words.map(word => (
+                  <WordChip
+                    key={word.id}
+                    id={word.id}
+                    word={word.text}
+                    isEditing={word.isEditing}
+                    isDestroyed={word.isDestroyed}
+                    isDragging={activeId === word.id}
+                    onUpdate={(text) => handleWordUpdate(word.id, text)}
+                    onCommit={() => handleWordCommit(word.id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+            <TrashDropZone />
+          </div>
+          <DragOverlay dropAnimation={dropAnimation}>
+            {activeId ? (
+              <div className="word-chip" style={{ cursor: 'grabbing' }}>
+                {words.find(w => w.id === activeId)?.text}
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
 
         <div className="input-section">
@@ -270,7 +367,18 @@ function App() {
           </div>
 
           <div className="suggestions-grid">
-            <div className="suggestion-col"></div>
+            <div className="suggestion-col center">
+              {deletedWords.map((word, index) => (
+                <button
+                  key={`deleted-${index}`}
+                  className="suggestion-chip"
+                 style={{ opacity: 0.7 }}
+                  onClick={() => handleDeletedWordClick(word)}
+                >
+                 {word}
+                </button>
+              ))}
+            </div>
             <div className="suggestion-col center">
               {suggestedWords.map((word, index) => (
                 <button
@@ -284,10 +392,10 @@ function App() {
             </div>
             <div className="suggestion-col"></div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
+        </div> 
+      </div> 
+    </div> 
+  ); 
 }
 
 export default App;
