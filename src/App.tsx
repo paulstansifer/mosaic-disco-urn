@@ -1,6 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
-import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
+import {
+    DndContext,
+    closestCenter,
+    DragOverlay,
+    useSensor,
+    useSensors,
+    MouseSensor,
+    TouchSensor,
+    type DropAnimation,
+    defaultDropAnimationSideEffects,
+    type DragEndEvent,
+    type DragStartEvent,
+    useDroppable
+} from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import allowedWordsRaw from './allowed_words.txt?raw';
 import allowedEndWordsRaw from './allowed_end_words.txt?raw';
@@ -76,6 +89,21 @@ const saveSentencesToCookie = (sentences: string[]) => {
   const value = encodeURIComponent(JSON.stringify(sentences));
   document.cookie = COOKIE_NAME + "=" + value + ";" + expires + ";path=/";
 };
+
+function TrashDropZone() {
+    const { isOver, setNodeRef } = useDroppable({
+        id: 'trash-drop-zone',
+    });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`trash-drop-zone ${isOver ? 'over' : ''}`}
+        >
+            🗑️
+        </div>
+    );
+}
 
 function App() {
   const [initialState] = useState(() => {
@@ -558,21 +586,50 @@ function App() {
     });
   };
 
-  return (
-    <div className="app">
-      <div className="content-wrapper">
-        <SentenceBuilder
-          words={words}
-          activeId={activeId}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onWordUpdate={handleWordUpdate}
-          onWordCommit={handleWordCommit}
-          onSave={handleSaveSentence}
-        />
+  const sensors = useSensors(
+      useSensor(MouseSensor),
+      useSensor(TouchSensor, {
+          activationConstraint: {
+              delay: 250,
+              tolerance: 5,
+          },
+      }),
+  );
 
-        <div className="input-section">
-          <button className="add-word-btn" onClick={handleAddWord}>+</button>
+  const dropAnimation: DropAnimation = {
+      sideEffects: defaultDropAnimationSideEffects({
+          styles: {
+              active: {
+                  opacity: '0.5',
+              },
+          },
+      }),
+  };
+
+  return (
+    <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+    >
+      <div className="app">
+        <div className="content-wrapper">
+          <SentenceBuilder
+            words={words}
+            activeId={activeId}
+            onWordUpdate={handleWordUpdate}
+            onWordCommit={handleWordCommit}
+          />
+
+          <div className="input-section">
+            <div className="button-container">
+            <button className="add-word-btn" onClick={handleAddWord}>+</button>
+            <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
+              💾
+            </button>
+            <TrashDropZone />
+          </div>
           <LetterPool letterPool={letterPool} />
           <SuggestionColumns
             deletedWords={deletedWords}
@@ -589,6 +646,14 @@ function App() {
         </div>
       </div>
     </div>
+    <DragOverlay dropAnimation={dropAnimation}>
+        {activeId ? (
+            <div className="word-chip" style={{ cursor: 'grabbing' }}>
+                {words.find(w => w.id === activeId)?.text}
+            </div>
+        ) : null}
+    </DragOverlay>
+    </DndContext>
   );
 }
 
