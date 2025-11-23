@@ -46,6 +46,7 @@ interface SentenceBuilderProps {
     onDragEnd: (event: DragEndEvent) => void;
     onWordUpdate: (id: number, newText: string) => void;
     onWordCommit: (id: number) => void;
+    onSave: () => void;
 }
 
 const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
@@ -55,6 +56,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
     onDragEnd,
     onWordUpdate,
     onWordCommit,
+    onSave,
 }) => {
     const sensors = useSensors(
         useSensor(MouseSensor),
@@ -84,6 +86,9 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
             onDragEnd={onDragEnd}
         >
             <div className="word-row">
+                <button className="save-btn" onClick={onSave} title="Save Sentence">
+                    💾
+                </button>
                 <SortableContext items={words} strategy={horizontalListSortingStrategy}>
                     <div className="word-chip-container">
                         {words.map(word => (

@@ -6,8 +6,33 @@ import allowedWordsRaw from './allowed_words.txt?raw';
 import LetterPool from './LetterPool';
 import SuggestionColumns from './SuggestionColumns';
 import SentenceBuilder from './SentenceBuilder';
+import SavedSentencesList from './SavedSentencesList';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+
+const INITIAL_POOL_SOURCE = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
+const INITIAL_SENTENCE_TEXT = "I fundamental !!";
+
+const shuffleString = (str: string) => {
+  const arr = str.split('');
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join('');
+};
+
+const updatePoolRemove = (pool: string, char: string) => {
+  const index = pool.indexOf(char);
+  if (index === -1) return null;
+  return pool.substring(0, index) + ' ' + pool.substring(index + 1);
+};
+
+const updatePoolAdd = (pool: string, char: string) => {
+  const index = pool.indexOf(' ');
+  if (index === -1) return pool + char;
+  return pool.substring(0, index) + char + pool.substring(index + 1);
+};
 
 const canFormWord = (word: string, pool: string) => {
   const poolCounts: Record<string, number> = {};
@@ -24,37 +49,73 @@ const canFormWord = (word: string, pool: string) => {
   return true;
 };
 
-function App() {
-  const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(
-    ['Today', 'is', 'a', 'beautiful', 'day', 'to', 'be', 'stomping', 'on', 'things']
-      .map((word, index) => ({ id: index + 1, text: word }))
-  );
+const COOKIE_NAME = 'mosaic_saved_sentences';
 
-  const INITIAL_POOL = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
-
-  const shuffleString = (str: string) => {
-    const arr = str.split('');
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+const getSavedSentencesFromCookie = (): string[] => {
+  try {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${COOKIE_NAME}=`);
+    if (parts.length === 2) {
+      const cookieVal = parts.pop()?.split(';').shift();
+      if (cookieVal) {
+        return JSON.parse(decodeURIComponent(cookieVal));
+      }
     }
-    return arr.join('');
-  };
+  } catch (e) {
+    console.error("Failed to parse saved sentences cookie", e);
+  }
+  return [];
+};
 
-  const [letterPool, setLetterPool] = useState(() => shuffleString(INITIAL_POOL));
+const saveSentencesToCookie = (sentences: string[]) => {
+  const d = new Date();
+  d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year
+  const expires = "expires=" + d.toUTCString();
+  const value = encodeURIComponent(JSON.stringify(sentences));
+  document.cookie = COOKIE_NAME + "=" + value + ";" + expires + ";path=/";
+};
+
+function App() {
+  const [initialState] = useState(() => {
+    let currentPool = INITIAL_POOL_SOURCE;
+    const wordsList = INITIAL_SENTENCE_TEXT.split(' ').filter(w => w.length > 0);
+    const initialWords = wordsList.map((word, index) => ({ id: index + 1, text: word }));
+
+    for (const word of wordsList) {
+      for (const char of word) {
+        const newPool = updatePoolRemove(currentPool, char);
+        if (newPool !== null) {
+          currentPool = newPool;
+        }
+      }
+    }
+
+    return {
+      words: initialWords,
+      pool: shuffleString(currentPool)
+    };
+  });
+
+  const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(initialState.words);
+  const [letterPool, setLetterPool] = useState(initialState.pool);
   const [deletedWords, setDeletedWords] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [savedSentences, setSavedSentences] = useState<string[]>([]);
 
-  const updatePoolRemove = (pool: string, char: string) => {
-    const index = pool.indexOf(char);
-    if (index === -1) return null;
-    return pool.substring(0, index) + ' ' + pool.substring(index + 1);
-  };
+  useEffect(() => {
+    setSavedSentences(getSavedSentencesFromCookie());
+  }, []);
 
-  const updatePoolAdd = (pool: string, char: string) => {
-    const index = pool.indexOf(' ');
-    if (index === -1) return pool + char;
-    return pool.substring(0, index) + char + pool.substring(index + 1);
+  const handleSaveSentence = () => {
+    const sentence = words.map(w => w.text).join(' ').trim();
+    if (!sentence) return;
+
+    setSavedSentences(prev => {
+      if (prev.includes(sentence)) return prev;
+      const newSentences = [sentence, ...prev];
+      saveSentencesToCookie(newSentences);
+      return newSentences;
+    });
   };
 
   const handleAddWord = () => {
@@ -447,6 +508,46 @@ function App() {
     }
   };
 
+  const handleLoadSentence = (newSentence: string) => {
+    let totalPool = letterPool;
+    words.forEach(w => {
+      for (const char of w.text) {
+        totalPool = updatePoolAdd(totalPool, char);
+      }
+    });
+
+    let tempPool = totalPool;
+    const newWordsList = newSentence.split(' ').filter(w => w.length > 0);
+
+    for (const word of newWordsList) {
+      for (const char of word) {
+        const res = updatePoolRemove(tempPool, char);
+        if (res === null) {
+          alert(`Not enough letters to form "${newSentence}"! Missing: ${char}`);
+          return;
+        }
+        tempPool = res;
+      }
+    }
+
+    const newWordsState = newWordsList.map((word, index) => ({
+      id: index + 1,
+      text: word,
+      isEditing: false
+    }));
+
+    setWords(newWordsState);
+    setLetterPool(tempPool.replace(/ /g, ''));
+  };
+
+  const handleDeleteSavedSentence = (sentenceToDelete: string) => {
+    setSavedSentences(prev => {
+      const newSentences = prev.filter(s => s !== sentenceToDelete);
+      saveSentencesToCookie(newSentences);
+      return newSentences;
+    });
+  };
+
   return (
     <div className="app">
       <div className="content-wrapper">
@@ -457,6 +558,7 @@ function App() {
           onDragEnd={handleDragEnd}
           onWordUpdate={handleWordUpdate}
           onWordCommit={handleWordCommit}
+          onSave={handleSaveSentence}
         />
 
         <div className="input-section">
@@ -467,6 +569,11 @@ function App() {
             suggestedWords={suggestedWords}
             onDeletedWordClick={handleDeletedWordClick}
             onSuggestedClick={handleSuggestedClick}
+          />
+          <SavedSentencesList
+            sentences={savedSentences}
+            onSelect={handleLoadSentence}
+            onDelete={handleDeleteSavedSentence}
           />
         </div>
       </div>
