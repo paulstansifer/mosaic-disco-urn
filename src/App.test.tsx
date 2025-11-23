@@ -4,15 +4,22 @@ import { describe, it, expect } from 'vitest';
 import App from './App';
 
 describe('App Interaction', () => {
-    it('renders the initial letter pool', () => {
+    /**
+     * @vitest-environment jsdom
+     * @description Verifies that the initial words of the sentence are rendered on the screen.
+     */
+    it('renders the initial sentence', () => {
         const { container } = render(<App />);
-        const pool = container.querySelector('.letter-pool');
-        expect(pool).toBeInTheDocument();
-        // Check that we have a significant amount of text (letters + spaces)
-        expect(pool?.textContent?.length).toBeGreaterThan(100);
-        expect(screen.getByText('Today')).toBeInTheDocument();
+        const wordRow = container.querySelector('.word-row');
+        expect(wordRow).toHaveTextContent('I');
+        expect(wordRow).toHaveTextContent('fundamental');
+        expect(wordRow).toHaveTextContent('!!');
     });
 
+    /**
+     * @vitest-environment jsdom
+     * @description Ensures that a user can add a new word chip and type into it.
+     */
     it('allows creating a new word and typing removes letters from pool', async () => {
         const user = userEvent.setup();
         render(<App />);
@@ -24,17 +31,14 @@ describe('App Interaction', () => {
         expect(input).toBeInTheDocument();
         expect(input).toHaveFocus();
 
-        // Type 't'
         await user.keyboard('t');
         expect(input).toHaveValue('t');
-
-        // Check if a 't' was removed from pool (replaced by space)
-        // This is tricky to test exactly because of the pool display format, 
-        // but we can check if the pool text content changes.
-        // A better way might be to check if the number of 't's decreases.
-        // But let's just verify the input value for now.
     });
 
+    /**
+     * @vitest-environment jsdom
+     * @description Checks that when a character is deleted, it is returned to the letter pool.
+     */
     it('returns letters to pool when deleting', async () => {
         const user = userEvent.setup();
         render(<App />);
@@ -48,55 +52,51 @@ describe('App Interaction', () => {
         expect(input).toHaveValue('');
     });
 
+    /**
+     * @vitest-environment jsdom
+     * @description Verifies that when the user presses "Enter", the word chip becomes non-editable.
+     */
     it('commits the word on Enter', async () => {
         const user = userEvent.setup();
         render(<App />);
 
         await user.click(screen.getByRole('button', { name: '+' }));
+        // 'hello' is a valid word from the list
         await user.keyboard('hello{Enter}');
 
         expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
         expect(screen.getByText('hello')).toBeInTheDocument();
     });
 
+    /**
+     * @vitest-environment jsdom
+     * @description Checks the "stealing" mechanic. If a letter is typed that is not in the
+     * letter pool but exists in another word, the application should "steal" it.
+     */
     it('steals letters from existing words if pool is empty', async () => {
-        // This test is harder because we need to exhaust the pool.
-        // We can mock the initial pool or just type a lot.
-        // Let's try to steal from "Today" (id: 1).
-
         const user = userEvent.setup();
         render(<App />);
 
-        // "Today" is on the screen.
-        expect(screen.getByText('Today')).toBeInTheDocument();
+        expect(screen.getByText('fundamental')).toBeInTheDocument();
 
-        // We need to exhaust 'T' or 'o' etc.
-        // The pool is huge, so exhausting it manually in test is hard.
-        // Maybe we can rely on the fact that 'T' (uppercase) might be rare?
-        // The initial pool has "III". "Today" has "T".
-        // Wait, the pool is lowercase mostly?
-        // INITIAL_POOL = "tttt... III..."
-        // "Today" has 'T'.
-
-        // Let's try to steal 'T'.
-        // First, consume all 'T's from the pool.
-        // There are no 'T's in the default pool! Only 't' and 'I'.
-        // Wait, "Today" starts with 'T'.
-        // If I type 'T', and it's not in pool, it should steal from "Today".
-
+        // The letter 'm' is not in the initial pool, so it must be stolen.
         await user.click(screen.getByRole('button', { name: '+' }));
-        await user.keyboard('T');
+        await user.keyboard('m');
 
-        // "Today" should be gone (or at least modified/removed).
-        // Our logic removes the whole word.
+        // The word "fundamental" should be marked for destruction.
         await waitFor(() => {
-            expect(screen.queryByText('Today')).not.toBeInTheDocument();
+            expect(screen.queryByText('fundamental')).not.toBeInTheDocument();
         });
 
         const input = screen.getByRole('textbox');
-        expect(input).toHaveValue('T');
+        expect(input).toHaveValue('m');
     });
 
+    /**
+     * @vitest-environment jsdom
+     * @description Ensures that if a user tries to type a letter that is not available,
+     * the input is ignored.
+     */
     it('ignores input if letter is not available anywhere', async () => {
         const user = userEvent.setup();
         render(<App />);
@@ -106,5 +106,18 @@ describe('App Interaction', () => {
 
         const input = screen.getByRole('textbox');
         expect(input).toHaveValue('');
+    });
+});
+
+describe('Validation Rules', () => {
+    /**
+     * @vitest-environment jsdom
+     * @description Verifies that the application displays the correct validation error
+     * messages when it first loads.
+     */
+    it('displays initial validation errors on render', () => {
+        render(<App />);
+        expect(screen.getByText("There must be exactly one eight-letter word.")).toBeInTheDocument();
+        expect(screen.getByText("The word before '!!' must end in 'w'.")).toBeInTheDocument();
     });
 });

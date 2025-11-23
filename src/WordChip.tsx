@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface WordChipProps {
   id: number;
   word: string;
+  isInvalid?: boolean;
   isEditing?: boolean;
   isDestroyed?: boolean;
   isDragging?: boolean;
@@ -12,7 +13,7 @@ interface WordChipProps {
   onCommit?: () => void;
 }
 
-const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, isDestroyed, isDragging, onUpdate, onCommit }) => {
+const WordChip: React.FC<WordChipProps> = ({ id, word, isInvalid, isEditing, isDestroyed, isDragging, onUpdate, onCommit }) => {
   const {
     attributes,
     listeners,
@@ -53,7 +54,7 @@ const WordChip: React.FC<WordChipProps> = ({ id, word, isEditing, isDestroyed, i
       style={style}
       {...attributes}
       {...listeners}
-      className={`word-chip ${isDestroyed ? 'destroyed' : ''}`}
+      className={`word-chip ${isDestroyed ? 'destroyed' : ''} ${isInvalid ? 'invalid' : ''}`}
     >
       {word}
     </div>

@@ -78,6 +78,19 @@ body {
   animation: destroy 0.5s forwards;
 }
 
+.word-chip.invalid {
+    border-color: #e57373; /* A soft red */
+    background-color: #ffcdd2; /* A light red background */
+    color: #b71c1c; /* A dark red text for contrast */
+}
+
+.validation-errors {
+    padding: 10px;
+    color: #d32f2f; /* A strong red color for the text */
+    font-size: 0.9em;
+    min-height: 40px; /* Reserve some space to avoid layout shifts */
+}
+
 @keyframes destroy {
   from {
     opacity: 1;

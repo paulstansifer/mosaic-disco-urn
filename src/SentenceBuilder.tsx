@@ -12,6 +12,7 @@ interface Word {
 interface SentenceBuilderProps {
     words: Word[];
     activeId: number | null;
+    invalidIds: Set<number>;
     onWordUpdate: (id: number, newText: string) => void;
     onWordCommit: (id: number) => void;
 }
@@ -19,6 +20,7 @@ interface SentenceBuilderProps {
 const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
     words,
     activeId,
+    invalidIds,
     onWordUpdate,
     onWordCommit,
 }) => {
@@ -31,6 +33,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
                             key={word.id}
                             id={word.id}
                             word={word.text}
+                            isInvalid={invalidIds.has(word.id)}
                             isEditing={word.isEditing}
                             isDestroyed={word.isDestroyed}
                             isDragging={activeId === word.id}
