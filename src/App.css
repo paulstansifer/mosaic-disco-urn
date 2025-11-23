@@ -35,16 +35,17 @@ body {
 }
 
 .trash-drop-zone {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 24px;
   background-color: rgba(255, 255, 255, 0.5);
   border: 2px dashed #999;
-  border-radius: 10px;
+  border-radius: 6px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .trash-drop-zone.over {
@@ -117,7 +118,13 @@ body {
   line-height: 1.2;
 }
 
-.add-word-btn {
+.button-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.add-word-btn, .save-btn {
   width: 40px;
   height: 40px;
   border-radius: 6px;
@@ -133,7 +140,7 @@ body {
   transition: transform 0.1s;
 }
 
-.add-word-btn:active {
+.add-word-btn:active, .save-btn:active {
   transform: scale(0.95);
 }
 
@@ -195,32 +202,6 @@ body {
 .suggestion-chip:active {
   transform: translateY(0);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.save-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #2196F3;
-  color: white;
-  font-size: 20px;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-  margin-right: 10px;
-}
-
-.save-btn:hover {
-  transform: scale(1.1);
-  background-color: #1976D2;
-}
-
-.save-btn:active {
-  transform: scale(0.95);
 }
 
 .saved-sentences-container {
