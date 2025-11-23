@@ -3,12 +3,14 @@ import './App.css';
 import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import allowedWordsRaw from './allowed_words.txt?raw';
+import allowedEndWordsRaw from './allowed_end_words.txt?raw';
 import LetterPool from './LetterPool';
 import SuggestionColumns from './SuggestionColumns';
 import SentenceBuilder from './SentenceBuilder';
 import SavedSentencesList from './SavedSentencesList';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 
 const INITIAL_POOL_SOURCE = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
 const INITIAL_SENTENCE_TEXT = "I fundamental !!";
@@ -412,15 +414,23 @@ function App() {
     return () => window.removeEventListener('paste', handlePaste);
   }, [letterPool, words]);
 
-  const suggestedWords = useMemo(() => {
+  const getSuggestedWords = (wordList: string[], pool: string) => {
     const validWords = [];
-    for (const word of ALLOWED_WORDS) {
-      if (canFormWord(word, letterPool)) {
+    for (const word of wordList) {
+      if (canFormWord(word, pool)) {
         validWords.push(word);
         if (validWords.length >= 30) break;
       }
     }
     return validWords;
+  };
+
+  const suggestedWords = useMemo(() => {
+    return getSuggestedWords(ALLOWED_WORDS, letterPool);
+  }, [letterPool]);
+
+  const suggestedEndWords = useMemo(() => {
+    return getSuggestedWords(ALLOWED_END_WORDS, letterPool);
   }, [letterPool]);
 
   const handleSuggestedClick = (word: string) => {
@@ -567,6 +577,7 @@ function App() {
           <SuggestionColumns
             deletedWords={deletedWords}
             suggestedWords={suggestedWords}
+            suggestedEndWords={suggestedEndWords}
             onDeletedWordClick={handleDeletedWordClick}
             onSuggestedClick={handleSuggestedClick}
           />
