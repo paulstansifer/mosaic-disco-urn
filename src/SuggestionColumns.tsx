@@ -3,6 +3,7 @@ import React from 'react';
 interface SuggestionColumnsProps {
     deletedWords: string[];
     suggestedWords: string[];
+    suggestedEndWords: string[];
     onDeletedWordClick: (word: string) => void;
     onSuggestedClick: (word: string) => void;
 }
@@ -10,6 +11,7 @@ interface SuggestionColumnsProps {
 const SuggestionColumns: React.FC<SuggestionColumnsProps> = ({
     deletedWords,
     suggestedWords,
+    suggestedEndWords,
     onDeletedWordClick,
     onSuggestedClick,
 }) => {
@@ -38,7 +40,17 @@ const SuggestionColumns: React.FC<SuggestionColumnsProps> = ({
                     </button>
                 ))}
             </div>
-            <div className="suggestion-col"></div>
+            <div className="suggestion-col suggestion-col-narrow">
+                {suggestedEndWords.map((word, index) => (
+                    <button
+                        key={`${word}-${index}`}
+                        className="suggestion-chip"
+                        onClick={() => onSuggestedClick(word)}
+                    >
+                        {word}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };
