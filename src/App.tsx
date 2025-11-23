@@ -1,18 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import {
-    DndContext,
-    closestCenter,
-    DragOverlay,
-    useSensor,
-    useSensors,
-    MouseSensor,
-    TouchSensor,
-    type DropAnimation,
-    defaultDropAnimationSideEffects,
-    type DragEndEvent,
-    type DragStartEvent,
-    useDroppable
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  MouseSensor,
+  TouchSensor,
+  type DropAnimation,
+  defaultDropAnimationSideEffects,
+  type DragEndEvent,
+  type DragStartEvent,
+  useDroppable
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import allowedWordsRaw from './allowed_words.txt?raw';
@@ -91,18 +91,18 @@ const saveSentencesToCookie = (sentences: string[]) => {
 };
 
 function TrashDropZone() {
-    const { isOver, setNodeRef } = useDroppable({
-        id: 'trash-drop-zone',
-    });
+  const { isOver, setNodeRef } = useDroppable({
+    id: 'trash-drop-zone',
+  });
 
-    return (
-        <div
-            ref={setNodeRef}
-            className={`trash-drop-zone ${isOver ? 'over' : ''}`}
-        >
-            🗑️
-        </div>
-    );
+  return (
+    <div
+      ref={setNodeRef}
+      className={`trash-drop-zone ${isOver ? 'over' : ''}`}
+    >
+      🗑️
+    </div>
+  );
 }
 
 function App() {
@@ -131,88 +131,98 @@ function App() {
   const [deletedWords, setDeletedWords] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [savedSentences, setSavedSentences] = useState<string[]>([]);
-    const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number> }>({ messages: [], invalidIds: new Set() });
+  const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number> }>({ messages: [], invalidIds: new Set() });
 
-    useEffect(() => {
-        const validateSentence = () => {
-            const newErrors: string[] = [];
-            const newInvalidIds = new Set<number>();
+  useEffect(() => {
+    const validateSentence = () => {
+      const newErrors: string[] = [];
+      const newInvalidIds = new Set<number>();
 
-                // Rule: First word must be "I"
-                const firstWord = words[0];
-                if (!firstWord || firstWord.text !== "I") {
-                    newErrors.push("The first word must be 'I'.");
-                    if(firstWord) newInvalidIds.add(firstWord.id);
-                }
+      // Rule: First word must be "I"
+      const firstWord = words[0];
+      if (!firstWord || firstWord.text !== "I") {
+        newErrors.push("The first word must be 'I'.");
+        if (firstWord) newInvalidIds.add(firstWord.id);
+      }
 
-                // Rule: Every word must be a valid word
-                const punctuation = new Set([':', ',', '!!', 'I']);
-                words.forEach(word => {
-                    if (!punctuation.has(word.text) && !ALLOWED_WORDS.includes(word.text.toLowerCase()) && !ALLOWED_END_WORDS.includes(word.text.toLowerCase())) {
-                        newErrors.push(`"${word.text}" is not a valid word.`);
-                        newInvalidIds.add(word.id);
-                    }
-                });
+      // Rule: Every word must be a valid word
+      const punctuation = new Set([':', ',', '!!', 'I']);
+      words.forEach(word => {
+        if (!punctuation.has(word.text) && !ALLOWED_WORDS.includes(word.text.toLowerCase()) && !ALLOWED_END_WORDS.includes(word.text.toLowerCase())) {
+          newErrors.push(`"${word.text}" is not a valid word.`);
+          newInvalidIds.add(word.id);
+        }
+      });
 
-            // Rule 1: There must be one eight-letter word.
-            const eightLetterWords = words.filter(w => w.text.length === 8);
-            if (eightLetterWords.length !== 1) {
-                newErrors.push("There must be exactly one eight-letter word.");
-                eightLetterWords.forEach(w => newInvalidIds.add(w.id));
-            }
+      // Rule 1: There must be one eight-letter word.
+      const eightLetterWords = words.filter(w => w.text.length === 8);
+      if (eightLetterWords.length !== 1) {
+        newErrors.push("There must be exactly one eight-letter word.");
+        eightLetterWords.forEach(w => newInvalidIds.add(w.id));
+      }
 
-            // Rule 2: The eight-letter word must be adjacent to "fundamental".
-            if (eightLetterWords.length === 1) {
-                const eightLetterWord = eightLetterWords[0];
-                const eightLetterIndex = words.findIndex(w => w.id === eightLetterWord.id);
-                const fundamentalIndex = words.findIndex(w => w.text === "fundamental");
+      // Rule 2: The eight-letter word must be adjacent to "fundamental".
+      if (eightLetterWords.length === 1) {
+        const eightLetterWord = eightLetterWords[0];
+        const eightLetterIndex = words.findIndex(w => w.id === eightLetterWord.id);
+        const fundamentalIndex = words.findIndex(w => w.text === "fundamental");
 
-                if (fundamentalIndex === -1) {
-                    newErrors.push("The word 'fundamental' is missing.");
-                } else if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
-                    newErrors.push("The eight-letter word must be next to 'fundamental'.");
-                    newInvalidIds.add(eightLetterWord.id);
-                    const fundamentalWord = words[fundamentalIndex];
-                    if (fundamentalWord) newInvalidIds.add(fundamentalWord.id);
-                }
-            }
+        if (fundamentalIndex === -1) {
+          newErrors.push("The word 'fundamental' is missing.");
+        } else if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
+          newErrors.push("The eight-letter word must be next to 'fundamental'.");
+          newInvalidIds.add(eightLetterWord.id);
+          const fundamentalWord = words[fundamentalIndex];
+          if (fundamentalWord) newInvalidIds.add(fundamentalWord.id);
+        }
+      }
 
-            // Rule 3: "!!" must be at the end.
-            const lastWord = words[words.length - 1];
-            if (!lastWord || lastWord.text !== "!!") {
-                newErrors.push("'!!' must be at the very end of the sentence.");
-                if(words.find(w => w.text === "!!")) {
-                    const bangWord = words.find(w => w.text === "!!");
-                    if (bangWord) newInvalidIds.add(bangWord.id);
-                }
-            }
+      // Rule 3: "!!" must be at the end.
+      const lastWord = words[words.length - 1];
+      if (!lastWord || lastWord.text !== "!!") {
+        newErrors.push("'!!' must be at the very end of the sentence.");
+        if (words.find(w => w.text === "!!")) {
+          const bangWord = words.find(w => w.text === "!!");
+          if (bangWord) newInvalidIds.add(bangWord.id);
+        }
+      }
 
-            // Rule 4: The word before "!!" must end in "w".
-            if (lastWord && lastWord.text === "!!") {
-                const secondToLastWord = words[words.length - 2];
-                if (!secondToLastWord || !secondToLastWord.text.endsWith("w")) {
-                    newErrors.push("The word before '!!' must end in 'w'.");
-                    if(secondToLastWord) newInvalidIds.add(secondToLastWord.id);
-                }
-            }
+      // Rule 4: The word before "!!" must end in "w".
+      if (lastWord && lastWord.text === "!!") {
+        const secondToLastWord = words[words.length - 2];
+        if (!secondToLastWord || !secondToLastWord.text.endsWith("w")) {
+          newErrors.push("The word before '!!' must end in 'w'.");
+          if (secondToLastWord) newInvalidIds.add(secondToLastWord.id);
+        }
+      }
 
-            // Rule 5: ":" must come before ",".
-            const colonIndex = words.findIndex(w => w.text === ":");
-            const commaIndex = words.findIndex(w => w.text === ",");
+      // Rule 5: ":" must come before ",".
+      const colonIndex = words.findIndex(w => w.text === ":");
+      const commaIndex = words.findIndex(w => w.text === ",");
 
-            if (colonIndex !== -1 && commaIndex !== -1 && colonIndex > commaIndex) {
-                newErrors.push("':' must come before ','.");
-                const colonWord = words[colonIndex];
-                const commaWord = words[commaIndex];
-                if (colonWord) newInvalidIds.add(colonWord.id);
-                if (commaWord) newInvalidIds.add(commaWord.id);
-            }
+      if (colonIndex !== -1 && commaIndex !== -1 && colonIndex > commaIndex) {
+        newErrors.push("':' must come before ','.");
+        const colonWord = words[colonIndex];
+        const commaWord = words[commaIndex];
+        if (colonWord) newInvalidIds.add(colonWord.id);
+        if (commaWord) newInvalidIds.add(commaWord.id);
+      }
 
-            setValidationErrors({ messages: newErrors, invalidIds: newInvalidIds });
-        };
+      setValidationErrors({ messages: newErrors, invalidIds: newInvalidIds });
+    };
 
-        validateSentence();
-    }, [words]);
+    validateSentence();
+  }, [words]);
+
+  useEffect(() => {
+    const poolCount = letterPool.replace(/ /g, '').length;
+    const sentenceCount = words.reduce((acc, w) => acc + w.text.replace(/ /g, '').length, 0);
+    const total = poolCount + sentenceCount;
+
+    if (total !== 102) {
+      console.error(`Invariant failed: Total characters is ${total}, expected 102.`);
+    }
+  }, [letterPool, words]);
 
   useEffect(() => {
     setSavedSentences(getSavedSentencesFromCookie());
@@ -669,31 +679,31 @@ function App() {
   };
 
   const sensors = useSensors(
-      useSensor(MouseSensor),
-      useSensor(TouchSensor, {
-          activationConstraint: {
-              delay: 250,
-              tolerance: 5,
-          },
-      }),
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
   );
 
   const dropAnimation: DropAnimation = {
-      sideEffects: defaultDropAnimationSideEffects({
-          styles: {
-              active: {
-                  opacity: '0.5',
-              },
-          },
-      }),
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: '0.5',
+        },
+      },
+    }),
   };
 
   return (
     <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
       <div className="app">
         <div className="content-wrapper">
@@ -712,35 +722,35 @@ function App() {
 
           <div className="input-section">
             <div className="button-container">
-            <button className="add-word-btn" onClick={handleAddWord}>+</button>
-            <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
-              💾
-            </button>
-            <TrashDropZone />
+              <button className="add-word-btn" onClick={handleAddWord}>+</button>
+              <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
+                💾
+              </button>
+              <TrashDropZone />
+            </div>
+            <LetterPool letterPool={letterPool} />
+            <SuggestionColumns
+              deletedWords={deletedWords}
+              suggestedWords={suggestedWords}
+              suggestedEndWords={suggestedEndWords}
+              onDeletedWordClick={handleDeletedWordClick}
+              onSuggestedClick={handleSuggestedClick}
+            />
+            <SavedSentencesList
+              sentences={savedSentences}
+              onSelect={handleLoadSentence}
+              onDelete={handleDeleteSavedSentence}
+            />
           </div>
-          <LetterPool letterPool={letterPool} />
-          <SuggestionColumns
-            deletedWords={deletedWords}
-            suggestedWords={suggestedWords}
-            suggestedEndWords={suggestedEndWords}
-            onDeletedWordClick={handleDeletedWordClick}
-            onSuggestedClick={handleSuggestedClick}
-          />
-          <SavedSentencesList
-            sentences={savedSentences}
-            onSelect={handleLoadSentence}
-            onDelete={handleDeleteSavedSentence}
-          />
         </div>
       </div>
-    </div>
-    <DragOverlay dropAnimation={dropAnimation}>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeId ? (
-            <div className="word-chip" style={{ cursor: 'grabbing' }}>
-                {words.find(w => w.id === activeId)?.text}
-            </div>
+          <div className="word-chip" style={{ cursor: 'grabbing' }}>
+            {words.find(w => w.id === activeId)?.text}
+          </div>
         ) : null}
-    </DragOverlay>
+      </DragOverlay>
     </DndContext>
   );
 }
