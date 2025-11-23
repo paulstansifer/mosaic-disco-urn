@@ -131,6 +131,88 @@ function App() {
   const [deletedWords, setDeletedWords] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [savedSentences, setSavedSentences] = useState<string[]>([]);
+    const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number> }>({ messages: [], invalidIds: new Set() });
+
+    useEffect(() => {
+        const validateSentence = () => {
+            const newErrors: string[] = [];
+            const newInvalidIds = new Set<number>();
+
+                // Rule: First word must be "I"
+                const firstWord = words[0];
+                if (!firstWord || firstWord.text !== "I") {
+                    newErrors.push("The first word must be 'I'.");
+                    if(firstWord) newInvalidIds.add(firstWord.id);
+                }
+
+                // Rule: Every word must be a valid word
+                const punctuation = new Set([':', ',', '!!', 'I']);
+                words.forEach(word => {
+                    if (!punctuation.has(word.text) && !ALLOWED_WORDS.includes(word.text.toLowerCase()) && !ALLOWED_END_WORDS.includes(word.text.toLowerCase())) {
+                        newErrors.push(`"${word.text}" is not a valid word.`);
+                        newInvalidIds.add(word.id);
+                    }
+                });
+
+            // Rule 1: There must be one eight-letter word.
+            const eightLetterWords = words.filter(w => w.text.length === 8);
+            if (eightLetterWords.length !== 1) {
+                newErrors.push("There must be exactly one eight-letter word.");
+                eightLetterWords.forEach(w => newInvalidIds.add(w.id));
+            }
+
+            // Rule 2: The eight-letter word must be adjacent to "fundamental".
+            if (eightLetterWords.length === 1) {
+                const eightLetterWord = eightLetterWords[0];
+                const eightLetterIndex = words.findIndex(w => w.id === eightLetterWord.id);
+                const fundamentalIndex = words.findIndex(w => w.text === "fundamental");
+
+                if (fundamentalIndex === -1) {
+                    newErrors.push("The word 'fundamental' is missing.");
+                } else if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
+                    newErrors.push("The eight-letter word must be next to 'fundamental'.");
+                    newInvalidIds.add(eightLetterWord.id);
+                    const fundamentalWord = words[fundamentalIndex];
+                    if (fundamentalWord) newInvalidIds.add(fundamentalWord.id);
+                }
+            }
+
+            // Rule 3: "!!" must be at the end.
+            const lastWord = words[words.length - 1];
+            if (!lastWord || lastWord.text !== "!!") {
+                newErrors.push("'!!' must be at the very end of the sentence.");
+                if(words.find(w => w.text === "!!")) {
+                    const bangWord = words.find(w => w.text === "!!");
+                    if (bangWord) newInvalidIds.add(bangWord.id);
+                }
+            }
+
+            // Rule 4: The word before "!!" must end in "w".
+            if (lastWord && lastWord.text === "!!") {
+                const secondToLastWord = words[words.length - 2];
+                if (!secondToLastWord || !secondToLastWord.text.endsWith("w")) {
+                    newErrors.push("The word before '!!' must end in 'w'.");
+                    if(secondToLastWord) newInvalidIds.add(secondToLastWord.id);
+                }
+            }
+
+            // Rule 5: ":" must come before ",".
+            const colonIndex = words.findIndex(w => w.text === ":");
+            const commaIndex = words.findIndex(w => w.text === ",");
+
+            if (colonIndex !== -1 && commaIndex !== -1 && colonIndex > commaIndex) {
+                newErrors.push("':' must come before ','.");
+                const colonWord = words[colonIndex];
+                const commaWord = words[commaIndex];
+                if (colonWord) newInvalidIds.add(colonWord.id);
+                if (commaWord) newInvalidIds.add(commaWord.id);
+            }
+
+            setValidationErrors({ messages: newErrors, invalidIds: newInvalidIds });
+        };
+
+        validateSentence();
+    }, [words]);
 
   useEffect(() => {
     setSavedSentences(getSavedSentencesFromCookie());
@@ -618,9 +700,15 @@ function App() {
           <SentenceBuilder
             words={words}
             activeId={activeId}
+            invalidIds={validationErrors.invalidIds}
             onWordUpdate={handleWordUpdate}
             onWordCommit={handleWordCommit}
           />
+          <div className="validation-errors">
+            {validationErrors.messages.map((msg, i) => (
+              <div key={i}>{msg}</div>
+            ))}
+          </div>
 
           <div className="input-section">
             <div className="button-container">
