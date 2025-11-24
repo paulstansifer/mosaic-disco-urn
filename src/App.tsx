@@ -240,9 +240,25 @@ function App() {
     });
   };
 
+  const getInsertionIndex = (currentWords: typeof words) => {
+    const bangIndex = currentWords.findIndex(w => w.text === "!!");
+    if (bangIndex === -1) return currentWords.length;
+
+    const wordBeforeBang = currentWords[bangIndex - 1];
+    if (wordBeforeBang && wordBeforeBang.text.endsWith("w")) {
+      return Math.max(0, bangIndex - 1);
+    }
+    return bangIndex;
+  };
+
   const handleAddWord = () => {
-    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
-    setWords([...words, { id: newId, text: '', isEditing: true }]);
+    setWords(prev => {
+      const newId = Math.max(0, ...prev.map(w => w.id)) + 1;
+      const insertIdx = getInsertionIndex(prev);
+      const newWords = [...prev];
+      newWords.splice(insertIdx, 0, { id: newId, text: '', isEditing: true });
+      return newWords;
+    });
   };
 
   const handleWordUpdate = (id: number, newText: string) => {
@@ -446,7 +462,8 @@ function App() {
           const updated = prev.map(w => w.isEditing ? { ...w, isEditing: false } : w);
           const newId = Math.max(0, ...updated.map(w => w.id)) + 1;
           // Add a new chip in editing mode
-          updated.push({ id: newId, text: '', isEditing: true });
+          const insertIdx = getInsertionIndex(updated);
+          updated.splice(insertIdx, 0, { id: newId, text: '', isEditing: true });
           return updated;
         });
         setLetterPool(prev => prev.replace(/ /g, '')); // Remove spaces after adding new word
@@ -536,8 +553,13 @@ function App() {
 
   const handleSuggestedClick = (word: string) => {
     // Add word to words list
-    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
-    setWords(prev => [...prev, { id: newId, text: word, isEditing: false }]);
+    setWords(prev => {
+      const newId = Math.max(0, ...prev.map(w => w.id)) + 1;
+      const insertIdx = getInsertionIndex(prev);
+      const newWords = [...prev];
+      newWords.splice(insertIdx, 0, { id: newId, text: word, isEditing: false });
+      return newWords;
+    });
 
     // Remove letters from pool
     let newPool = letterPool;
@@ -590,10 +612,12 @@ function App() {
     }
 
     // Success - apply changes
-    const newId = Math.max(0, ...words.map(w => w.id)) + 1;
-
     setWords(prev => {
-      const newWords = [...prev, { id: newId, text: word, isEditing: false }];
+      const newId = Math.max(0, ...prev.map(w => w.id)) + 1;
+      const insertIdx = getInsertionIndex(prev);
+      const newWords = [...prev];
+      newWords.splice(insertIdx, 0, { id: newId, text: word, isEditing: false });
+
       return newWords.map(w => {
         if (wordsToDestroyIds.has(w.id)) {
           return { ...w, isDestroyed: true };
