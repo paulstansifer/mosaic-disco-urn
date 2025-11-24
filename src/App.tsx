@@ -360,6 +360,12 @@ function App() {
     });
 
     if (wordsToDestroyIds.size > 0) {
+      const destroyedWords = words.filter(w => wordsToDestroyIds.has(w.id));
+      setDeletedWords(prev => {
+        const newDeleted = [...destroyedWords.map(w => w.text), ...prev];
+        return newDeleted.slice(0, 20);
+      });
+
       setTimeout(() => {
         setWords(prev => prev.filter(w => !wordsToDestroyIds.has(w.id)));
       }, 500);
