@@ -1,3 +1,4 @@
+fundamental
 :
 ,
 !!
@@ -1217,7 +1218,6 @@ finish
 flour
 forsooth
 french
-fundamental
 gas
 goal
 grace
