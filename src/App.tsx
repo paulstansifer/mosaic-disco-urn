@@ -229,7 +229,10 @@ function App() {
   }, []);
 
   const handleSaveSentence = () => {
-    const sentence = words.map(w => w.text).join(' ').trim();
+    let sentence = words.map(w => w.text).join(' ').trim();
+    // Remove spaces before punctuation
+    sentence = sentence.replace(/\s+([,:]|!!)/g, '$1');
+
     if (!sentence) return;
 
     setSavedSentences(prev => {
