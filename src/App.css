@@ -25,7 +25,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 5px;
+  gap: 0.5rem;
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -67,11 +67,17 @@ body {
   border-radius: 6px;
   background-color: #FFFFFF;
   color: #000000;
-  border: 0px solid #4CAF5077;
+  border: 1px solid transparent;
   cursor: grab;
   user-select: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.25s ease;
+  min-width: 2em;
+  text-align: center;
+  box-sizing: border-box;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-family: inherit;
 }
 
 .word-chip.destroyed {
@@ -190,14 +196,14 @@ body {
 
 .suggestion-col {
   min-height: 50px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-content: flex-start;
 }
 
 .suggestion-col.center {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  align-content: flex-start;
-  gap: 8px;
 }
 
 .suggestion-chip {
@@ -205,13 +211,19 @@ body {
   border-radius: 6px;
   background-color: #FFFFFF;
   color: #000000;
-  border: 2px solid #4CAF5077;
+  border: 1px solid transparent;
   cursor: pointer;
   user-select: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.25s ease;
   font-family: inherit;
   font-size: 1rem;
+  min-width: 2em;
+  text-align: center;
+  box-sizing: border-box;
+  line-height: 1.5;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .suggestion-chip:hover {

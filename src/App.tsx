@@ -658,7 +658,7 @@ function App() {
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+        delay: 0,
         tolerance: 5,
       },
     }),
