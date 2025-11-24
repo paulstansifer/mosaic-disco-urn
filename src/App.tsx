@@ -20,7 +20,7 @@ import allowedEndWordsRaw from './allowed_end_words.txt?raw';
 import LetterPool from './LetterPool';
 import SuggestionColumns from './SuggestionColumns';
 import SentenceBuilder from './SentenceBuilder';
-import SavedSentencesList from './SavedSentencesList';
+import SavedSentencesList, { type SavedSentence } from './SavedSentencesList';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
@@ -66,14 +66,22 @@ const canFormWord = (word: string, pool: string) => {
 
 const COOKIE_NAME = 'mosaic_saved_sentences';
 
-const getSavedSentencesFromCookie = (): string[] => {
+const getSavedSentencesFromCookie = (): SavedSentence[] => {
   try {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${COOKIE_NAME}=`);
     if (parts.length === 2) {
       const cookieVal = parts.pop()?.split(';').shift();
       if (cookieVal) {
-        return JSON.parse(decodeURIComponent(cookieVal));
+        const parsed = JSON.parse(decodeURIComponent(cookieVal));
+        if (Array.isArray(parsed)) {
+          return parsed.map((item: any) => {
+            if (typeof item === 'string') {
+              return { text: item, pool: '' };
+            }
+            return item;
+          });
+        }
       }
     }
   } catch (e) {
@@ -82,7 +90,7 @@ const getSavedSentencesFromCookie = (): string[] => {
   return [];
 };
 
-const saveSentencesToCookie = (sentences: string[]) => {
+const saveSentencesToCookie = (sentences: SavedSentence[]) => {
   const d = new Date();
   d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year
   const expires = "expires=" + d.toUTCString();
@@ -130,7 +138,7 @@ function App() {
   const [letterPool, setLetterPool] = useState(initialState.pool);
   const [deletedWords, setDeletedWords] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
-  const [savedSentences, setSavedSentences] = useState<string[]>([]);
+  const [savedSentences, setSavedSentences] = useState<SavedSentence[]>([]);
   const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number> }>({ messages: [], invalidIds: new Set() });
 
   useEffect(() => {
@@ -229,15 +237,18 @@ function App() {
   }, []);
 
   const handleSaveSentence = () => {
-    let sentence = words.map(w => w.text).join(' ').trim();
+    let sentenceText = words.map(w => w.text).join(' ').trim();
     // Remove spaces before punctuation
-    sentence = sentence.replace(/\s+([,:]|!!)/g, '$1');
+    sentenceText = sentenceText.replace(/\s+([,:]|!!)/g, '$1');
 
-    if (!sentence) return;
+    if (!sentenceText) return;
+
+    const sortedPool = letterPool.replace(/ /g, '').split('').sort().join('');
 
     setSavedSentences(prev => {
-      if (prev.includes(sentence)) return prev;
-      const newSentences = [sentence, ...prev];
+      if (prev.some(s => s.text === sentenceText)) return prev;
+      const newEntry: SavedSentence = { text: sentenceText, pool: sortedPool };
+      const newSentences = [newEntry, ...prev];
       saveSentencesToCookie(newSentences);
       return newSentences;
     });
@@ -681,7 +692,7 @@ function App() {
 
   const handleDeleteSavedSentence = (sentenceToDelete: string) => {
     setSavedSentences(prev => {
-      const newSentences = prev.filter(s => s !== sentenceToDelete);
+      const newSentences = prev.filter(s => s.text !== sentenceToDelete);
       saveSentencesToCookie(newSentences);
       return newSentences;
     });

@@ -1,7 +1,12 @@
 import React from 'react';
 
+export interface SavedSentence {
+    text: string;
+    pool: string;
+}
+
 interface SavedSentencesListProps {
-    sentences: string[];
+    sentences: SavedSentence[];
     onSelect: (sentence: string) => void;
     onDelete: (sentence: string) => void;
 }
@@ -19,16 +24,21 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSe
                     <li key={index} className="saved-sentence-item">
                         <span
                             className="saved-sentence-text"
-                            onClick={() => onSelect(sentence)}
+                            onClick={() => onSelect(sentence.text)}
                             title="Click to load this sentence"
                         >
-                            {sentence}
+                            {sentence.text}
+                            {sentence.pool && (
+                                <span style={{ color: 'gray', marginLeft: '1rem', fontSize: '0.9em' }}>
+                                    {sentence.pool}
+                                </span>
+                            )}
                         </span>
                         <button
                             className="delete-saved-btn"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onDelete(sentence);
+                                onDelete(sentence.text);
                             }}
                             title="Delete saved sentence"
                         >
