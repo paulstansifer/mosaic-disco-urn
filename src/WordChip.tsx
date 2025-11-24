@@ -9,18 +9,19 @@ interface WordChipProps {
   isEditing?: boolean;
   isDestroyed?: boolean;
   isDragging?: boolean;
+  disabled?: boolean;
   onUpdate?: (newText: string) => void;
   onCommit?: () => void;
 }
 
-const WordChip: React.FC<WordChipProps> = ({ id, word, isInvalid, isEditing, isDestroyed, isDragging, onUpdate, onCommit }) => {
+const WordChip: React.FC<WordChipProps> = ({ id, word, isInvalid, isEditing, isDestroyed, isDragging, disabled, onUpdate, onCommit }) => {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id, disabled: isEditing });
+  } = useSortable({ id, disabled: isEditing || disabled });
 
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),

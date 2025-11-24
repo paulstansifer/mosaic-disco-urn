@@ -257,7 +257,7 @@ function App() {
     }
 
     const wordsToDestroyIds = new Set<number>();
-    const parts = newText.split(' ');
+    const parts = newText.split(/((?:[,:]|!!|\s+))/).filter(p => p.length === 0 || p.trim().length > 0);
     const processedParts: { text: string, isNew: boolean }[] = [];
 
     // Helper to form string with stealing logic
@@ -377,6 +377,12 @@ function App() {
     const wordToDelete = words.find(w => w.id === id);
     if (!wordToDelete) return;
 
+    const index = words.indexOf(wordToDelete);
+    const isFirstI = index === 0 && wordToDelete.text === 'I';
+    const isLastBang = index === words.length - 1 && wordToDelete.text === '!!';
+
+    if (isFirstI || isLastBang) return;
+
     // Add to deleted stack
     setDeletedWords(prev => [wordToDelete.text, ...prev].slice(0, 20));
 
@@ -455,78 +461,47 @@ function App() {
       const text = e.clipboardData?.getData('text');
       if (!text) return;
 
+      // 1. Reclaim all letters from current words
       let currentPool = letterPool;
-      const wordsToDestroyIds = new Set<number>();
-      const parts = text.split(/\s+/);
-      const newWordsToAdd: { text: string }[] = [];
+      words.forEach(w => {
+        if (!w.isDestroyed) {
+          for (const char of w.text) {
+            currentPool = updatePoolAdd(currentPool, char);
+          }
+        }
+      });
 
-      const formString = (target: string) => {
+      // 2. Process pasted text
+      const parts = text.split(/((?:[,:]|!!|\s+))/).filter(p => p.trim().length > 0);
+      const newWordsToAdd: { id: number, text: string, isEditing: boolean }[] = [];
+
+      // 3. Form new words
+      let nextId = 1;
+
+      for (const part of parts) {
         let formed = '';
-        for (const char of target) {
+        for (const char of part) {
           const poolAfterRemove = updatePoolRemove(currentPool, char);
           if (poolAfterRemove !== null) {
             currentPool = poolAfterRemove;
             formed += char;
-          } else {
-            // Try to steal
-            let stolenId = -1;
-            for (let i = words.length - 1; i >= 0; i--) {
-              const w = words[i];
-              if (!wordsToDestroyIds.has(w.id) && w.text.includes(char)) {
-                stolenId = w.id;
-                break;
-              }
-            }
-
-            if (stolenId !== -1) {
-              wordsToDestroyIds.add(stolenId);
-              const victim = words.find(w => w.id === stolenId)!;
-              for (const c of victim.text) {
-                currentPool = updatePoolAdd(currentPool, c);
-              }
-              currentPool = updatePoolRemove(currentPool, char)!;
-              formed += char;
-            }
           }
+          // If we can't find the char, we skip it (best effort paste)
         }
-        return formed;
-      };
 
-      for (const part of parts) {
-        if (!part) continue;
-        const formed = formString(part);
-        if (formed) {
-          newWordsToAdd.push({ text: formed });
+        if (formed.length > 0) {
+          newWordsToAdd.push({
+            id: nextId++,
+            text: formed,
+            isEditing: false
+          });
         }
       }
 
+      // 4. Update state
       if (newWordsToAdd.length > 0) {
         setLetterPool(currentPool);
-        setWords(prev => {
-          const newWords = [...prev];
-          let nextId = Math.max(0, ...newWords.map(w => w.id)) + 1;
-
-          for (const newWord of newWordsToAdd) {
-            newWords.push({
-              id: nextId++,
-              text: newWord.text,
-              isEditing: false
-            });
-          }
-
-          return newWords.map(w => {
-            if (wordsToDestroyIds.has(w.id)) {
-              return { ...w, isDestroyed: true };
-            }
-            return w;
-          });
-        });
-
-        if (wordsToDestroyIds.size > 0) {
-          setTimeout(() => {
-            setWords(prev => prev.filter(w => !wordsToDestroyIds.has(w.id)));
-          }, 500);
-        }
+        setWords(newWordsToAdd);
       }
     };
 
@@ -641,13 +616,14 @@ function App() {
   const handleLoadSentence = (newSentence: string) => {
     let totalPool = letterPool;
     words.forEach(w => {
+      if (w.isDestroyed) return;
       for (const char of w.text) {
         totalPool = updatePoolAdd(totalPool, char);
       }
     });
 
     let tempPool = totalPool;
-    const newWordsList = newSentence.split(' ').filter(w => w.length > 0);
+    const newWordsList = newSentence.split(/((?:[,:]|!!|\s+))/).filter(w => w.trim().length > 0);
 
     for (const word of newWordsList) {
       for (const char of word) {
