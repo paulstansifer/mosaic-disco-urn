@@ -392,8 +392,12 @@ function App() {
     if (wordsToDestroyIds.size > 0) {
       const destroyedWords = words.filter(w => wordsToDestroyIds.has(w.id));
       setDeletedWords(prev => {
-        const newDeleted = [...destroyedWords.map(w => w.text), ...prev];
-        return newDeleted.slice(0, 20);
+        const newTexts = destroyedWords
+          .map(w => w.text)
+          .filter(t => t.trim().length > 0);
+        const combined = [...newTexts, ...prev];
+        const unique = Array.from(new Set(combined));
+        return unique.slice(0, 20);
       });
 
       setTimeout(() => {
@@ -420,7 +424,13 @@ function App() {
     if (isFirstI || isLastBang) return;
 
     // Add to deleted stack
-    setDeletedWords(prev => [wordToDelete.text, ...prev].slice(0, 20));
+    if (wordToDelete.text.trim().length > 0) {
+      setDeletedWords(prev => {
+        const combined = [wordToDelete.text, ...prev];
+        const unique = Array.from(new Set(combined));
+        return unique.slice(0, 20);
+      });
+    }
 
     // Return letters to pool
     let newPool = letterPool;
