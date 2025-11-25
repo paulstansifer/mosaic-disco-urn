@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import WordChip from './WordChip';
 import prefixTextRaw from './1663_prefix.txt?raw';
@@ -26,6 +26,27 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
     onWordCommit,
 }) => {
     const [showPrefix, setShowPrefix] = useState(false);
+    const chipsAreaRef = useRef<HTMLDivElement>(null);
+    const [prevTop, setPrevTop] = useState<number | null>(null);
+
+    const togglePrefix = () => {
+        if (chipsAreaRef.current) {
+            const rect = chipsAreaRef.current.getBoundingClientRect();
+            setPrevTop(rect.top);
+        }
+        setShowPrefix(!showPrefix);
+    };
+
+    useLayoutEffect(() => {
+        if (prevTop !== null && chipsAreaRef.current) {
+            const newRect = chipsAreaRef.current.getBoundingClientRect();
+            const delta = newRect.top - prevTop;
+            if (delta !== 0) {
+                window.scrollBy({ top: delta, behavior: 'instant' });
+            }
+            setPrevTop(null);
+        }
+    }, [showPrefix, prevTop]);
 
     return (
         <div className="word-row">
@@ -34,7 +55,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
                     <div className="prefix-container">
                         <button
                             className="prefix-toggle-btn"
-                            onClick={() => setShowPrefix(!showPrefix)}
+                            onClick={togglePrefix}
                             title={showPrefix ? "Hide prefix" : "Show prefix"}
                         >
                             {showPrefix ? "▲" : "▼"}
@@ -45,7 +66,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
                             </div>
                         )}
                     </div>
-                    <div className="chips-area">
+                    <div className="chips-area" ref={chipsAreaRef}>
                         {words.map((word, index) => {
                             const isFirstI = index === 0 && word.text === 'I';
                             const isLastBang = index === words.length - 1 && word.text === '!!';
