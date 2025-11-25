@@ -149,7 +149,8 @@ body {
 }
 
 .add-word-btn,
-.save-btn {
+.save-btn,
+.clear-btn {
   width: 80px;
   height: 40px;
   padding: 0;
@@ -166,8 +167,13 @@ body {
   transition: transform 0.1s;
 }
 
+.clear-btn {
+  background-color: #FF9800;
+}
+
 .add-word-btn:active,
-.save-btn:active {
+.save-btn:active,
+.clear-btn:active {
   transform: scale(0.95);
 }
 

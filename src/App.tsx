@@ -26,7 +26,7 @@ const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w =>
 const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 
 const INITIAL_POOL_SOURCE = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
-const INITIAL_SENTENCE_TEXT = "I fundamental !!";
+const INITIAL_SENTENCE_TEXT = "I !!";
 
 const shuffleString = (str: string) => {
   const arr = str.split('');
@@ -698,6 +698,37 @@ function App() {
     });
   };
 
+  const handleClearAll = () => {
+    let newPool = letterPool;
+
+    // Return all letters from current words to the pool
+    words.forEach(w => {
+      if (w.isDestroyed) return;
+      for (const char of w.text) {
+        newPool = updatePoolAdd(newPool, char);
+      }
+    });
+
+    // Define the reset state
+    const resetWords = [
+      { id: 1, text: "I", isEditing: false },
+      { id: 2, text: "!!", isEditing: false }
+    ];
+
+    // Consume letters for the reset words
+    for (const w of resetWords) {
+      for (const char of w.text) {
+        const updated = updatePoolRemove(newPool, char);
+        if (updated !== null) {
+          newPool = updated;
+        }
+      }
+    }
+
+    setWords(resetWords);
+    setLetterPool(newPool.replace(/ /g, ''));
+  };
+
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
@@ -747,6 +778,9 @@ function App() {
                 💾
               </button>
               <TrashDropZone />
+              <button className="clear-btn" onClick={handleClearAll} title="Clear All">
+                🧹
+              </button>
             </div>
             <LetterPool letterPool={letterPool} />
             <SuggestionColumns
