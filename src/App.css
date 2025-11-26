@@ -130,6 +130,10 @@ body {
   gap: 1rem;
 }
 
+.about {
+  max-width: 900px;
+}
+
 .letter-pool {
   font-family: 'Lucida Console', monospace;
   text-align: center;
