@@ -561,7 +561,7 @@ function App() {
     for (const word of wordList) {
       if (canFormWord(word, pool)) {
         validWords.push(word);
-        if (validWords.length >= 30) break;
+        if (validWords.length >= 90) break;
       }
     }
     return validWords;
