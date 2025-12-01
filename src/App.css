@@ -86,12 +86,8 @@ body {
 }
 
 .word-chip.invalid {
-  border-color: #e57373;
-  /* A soft red */
-  background-color: #ffcdd2;
-  /* A light red background */
-  color: #b71c1c;
-  /* A dark red text for contrast */
+  background-color: #f7d4d7;
+  color: #000000;
 }
 
 .validation-errors {
@@ -155,7 +151,8 @@ body {
 
 .add-word-btn,
 .save-btn,
-.clear-btn {
+.clear-btn,
+.shuffle-btn {
   width: 80px;
   height: 40px;
   padding: 0;
@@ -178,7 +175,8 @@ body {
 
 .add-word-btn:active,
 .save-btn:active,
-.clear-btn:active {
+.clear-btn:active,
+.shuffle-btn:active {
   transform: scale(0.95);
 }
 

@@ -708,6 +708,10 @@ function App() {
     });
   };
 
+  const handleShuffle = () => {
+    setLetterPool(prev => shuffleString(prev.replace(/ /g, '')));
+  };
+
   const handleClearAll = () => {
     let newPool = letterPool;
 
@@ -783,6 +787,9 @@ function App() {
 
           <div className="input-section">
             <div className="button-container">
+              <button className="shuffle-btn" onClick={handleShuffle} title="Shuffle & Compact">
+                🔀
+              </button>
               <button className="add-word-btn" onClick={handleAddWord}>+</button>
               <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
                 💾
