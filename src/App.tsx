@@ -808,7 +808,7 @@ function App() {
           </div>
           <div className="about">
             <hr />
-            <a href="https://qwantz.com">Dinosaur Comics</a> is a long-running webcomic by Ryan North. In 2010, the <a href="https://www.qwantz.com/index.php?comic=1663">1663rd comic</a> discussed the way that some scientists used to use anagrams as a sort of <a href="https://en.wikipedia.org/wiki/Commitment_scheme">commitment scheme</a> to claim priority on good ideas. But the punchline to the comic was given in anagram form. Fans of the comic tried to unscramble it, and Ryan North later provided some <a href="https://www.qwantz.com/index.php?comic=1665">hints</a> to narrow the search space. (The fact that the 11-letter word is "fundamental" is not listed there; I'm pretty sure Ryan North tweeted it, but he regularly deleted old tweets back then, so I have no direct evidence!)
+            <a href="https://qwantz.com">Dinosaur Comics</a> is a long-running webcomic by Ryan North. In 2010, the <a href="https://www.qwantz.com/index.php?comic=1663">1663rd comic</a> discussed the way that some scientists used to use anagrams as a sort of <a href="https://en.wikipedia.org/wiki/Commitment_scheme">commitment scheme</a> to claim priority on good ideas. But the punchline to the comic was given in anagram form. Fans of the comic tried to unscramble it, and Ryan North later provided some <a href="https://www.qwantz.com/index.php?comic=1665">hints</a> to narrow the search space.
           </div>
         </div>
       </div>
