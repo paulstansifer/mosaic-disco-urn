@@ -490,7 +490,7 @@ function App() {
           updated.splice(insertIdx, 0, { id: newId, text: '', isEditing: true });
           return updated;
         });
-        setLetterPool(prev => prev.replace(/ /g, '')); // Remove spaces after adding new word
+
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -594,7 +594,7 @@ function App() {
       }
     }
     // Clear spaces from the pool
-    setLetterPool(newPool.replace(/ /g, ''));
+    setLetterPool(newPool);
   };
 
   const handleDeletedWordClick = (word: string) => {
