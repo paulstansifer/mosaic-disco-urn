@@ -708,10 +708,6 @@ function App() {
     });
   };
 
-  const handleShuffle = () => {
-    setLetterPool(prev => shuffleString(prev.replace(/ /g, '')));
-  };
-
   const handleClearAll = () => {
     let newPool = letterPool;
 
@@ -787,9 +783,6 @@ function App() {
 
           <div className="input-section">
             <div className="button-container">
-              <button className="shuffle-btn" onClick={handleShuffle} title="Shuffle & Compact">
-                🔀
-              </button>
               <button className="add-word-btn" onClick={handleAddWord}>+</button>
               <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
                 💾
@@ -815,7 +808,7 @@ function App() {
           </div>
           <div className="about">
             <hr />
-            <a href="https://qwantz.com">Dinosaur Comics</a> is a long-running webcomic by Ryan North. In 2010, the <a href="https://www.qwantz.com/index.php?comic=1663">1663rd comic</a> discussed the way that some scientists used to use anagrams as a sort of <a href="https://en.wikipedia.org/wiki/Commitment_scheme">commitment scheme</a> to claim priority on good ideas. But the punchline to the comic was given in anagram form. Fans of the comic tried to unscramble it, and Ryan North later provided some <a href="https://www.qwantz.com/index.php?comic=1665">hints</a> to narrow the search space.
+            <a href="https://qwantz.com">Dinosaur Comics</a> is a long-running webcomic by Ryan North. In 2010, the <a href="https://www.qwantz.com/index.php?comic=1663">1663rd comic</a> discussed the way that some scientists used to use anagrams as a sort of <a href="https://en.wikipedia.org/wiki/Commitment_scheme">commitment scheme</a> to claim priority on good ideas. The punchline to the comic was given in anagram form, and Ryan North later provided some <a href="https://www.qwantz.com/index.php?comic=1665">hints</a> to narrow the search space, but the real punchline has not yet been recovered!
           </div>
         </div>
       </div>
