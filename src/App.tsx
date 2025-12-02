@@ -140,6 +140,7 @@ function App() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [savedSentences, setSavedSentences] = useState<SavedSentence[]>([]);
   const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number> }>({ messages: [], invalidIds: new Set() });
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     const validateSentence = () => {
@@ -266,6 +267,7 @@ function App() {
   };
 
   const handleAddWord = () => {
+    setHasInteracted(true);
     setWords(prev => {
       const newId = Math.max(0, ...prev.map(w => w.id)) + 1;
       const insertIdx = getInsertionIndex(prev);
@@ -479,6 +481,7 @@ function App() {
       if (e.key === 'Enter') {
         setLetterPool(prev => shuffleString(prev.replace(/ /g, ''))); // Remove spaces before shuffling
       } else if (e.key === ' ') {
+        setHasInteracted(true);
         e.preventDefault(); // Prevent default space behavior (e.g., scrolling)
         // Commit any currently editing chip and start a new one
         setWords(prev => {
@@ -556,23 +559,23 @@ function App() {
     return () => window.removeEventListener('paste', handlePaste);
   }, [letterPool, words]);
 
-  const getSuggestedWords = (wordList: string[], pool: string) => {
+  const getSuggestedWords = (wordList: string[], pool: string, max: number) => {
     const validWords = [];
     for (const word of wordList) {
       if (canFormWord(word, pool)) {
         validWords.push(word);
-        if (validWords.length >= 90) break;
+        if (validWords.length >= max) break;
       }
     }
     return validWords;
   };
 
   const suggestedWords = useMemo(() => {
-    return getSuggestedWords(ALLOWED_WORDS, letterPool);
+    return getSuggestedWords(ALLOWED_WORDS, letterPool, 90);
   }, [letterPool]);
 
   const suggestedEndWords = useMemo(() => {
-    return getSuggestedWords(ALLOWED_END_WORDS, letterPool);
+    return getSuggestedWords(ALLOWED_END_WORDS, letterPool, 30);
   }, [letterPool]);
 
   const handleSuggestedClick = (word: string) => {
@@ -799,6 +802,11 @@ function App() {
                 🧹
               </button>
             </div>
+            {!hasInteracted && (
+              <div className="instruction-message">
+                Click "+" or press the spacebar to type a new word
+              </div>
+            )}
             <LetterPool letterPool={letterPool} />
             <SuggestionColumns
               deletedWords={deletedWords}
