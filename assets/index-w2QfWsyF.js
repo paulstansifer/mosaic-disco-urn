@@ -208,7 +208,6 @@ big
 wrong
 hear
 soon
-aw
 instead
 wait
 already
@@ -269,7 +268,6 @@ least
 yourself
 deal
 either
-s
 show
 start
 trying
@@ -392,7 +390,6 @@ hell
 however
 lose
 religion
-t
 behind
 dinner
 eating
@@ -438,7 +435,6 @@ serious
 taking
 thank
 week
-aww
 card
 dear
 died
@@ -600,7 +596,6 @@ twenty
 walk
 allowed
 awkward
-b
 building
 cannot
 culture
@@ -743,7 +738,6 @@ aware
 birds
 cards
 charity
-e
 eye
 failed
 felt
@@ -771,7 +765,6 @@ argue
 barely
 beneath
 bitches
-c
 create
 describe
 energy
@@ -1016,7 +1009,6 @@ hug
 ignore
 invited
 kitchen
-o
 oooh
 reads
 shall
@@ -1058,7 +1050,6 @@ cooties
 creation
 cry
 cultures
-d
 debt
 dust
 edgar
@@ -1162,7 +1153,6 @@ kisses
 leaves
 lines
 low
-n
 nuclear
 odd
 orange
@@ -1246,7 +1236,6 @@ longest
 noise
 observe
 olde
-r
 readers
 received
 research
@@ -1317,12 +1306,10 @@ flaws
 foods
 fourth
 fries
-g
 general
 goodbye
 gravy
 greeks
-h
 hardly
 hearing
 hiding
@@ -1640,7 +1627,6 @@ training
 troubled
 turkey
 twice
-u
 uncle
 unknown
 useless
@@ -1726,9 +1712,6 @@ edge
 election
 essay
 essence
-et
-eww
-f
 fallen
 favorite
 fed
@@ -1972,7 +1955,6 @@ lawn
 lend
 length
 locked
-nd
 nicely
 noble
 novelty
@@ -2056,7 +2038,6 @@ twitter
 unaware
 unfair
 usa
-v
 valuable
 values
 variety
@@ -2082,7 +2063,6 @@ adds
 advise
 agent
 analysis
-ar
 archie
 arrested
 article
@@ -2221,7 +2201,6 @@ initial
 innocent
 invest
 iron
-l
 la
 lacks
 lakes
@@ -2524,7 +2503,6 @@ disable
 dislikes
 distract
 ditch
-dl
 dna
 doc
 downhill
@@ -2617,7 +2595,6 @@ hullo
 hysteria
 igloos
 ignored
-iii
 ill
 incident
 included
@@ -2626,7 +2603,6 @@ indicate
 indulges
 infected
 italics
-k
 kay
 kayleigh
 kent
@@ -2677,7 +2653,6 @@ nurse
 obituary
 offered
 offstage
-ogc
 olden
 orbiting
 orders
@@ -2692,7 +2667,6 @@ rafting
 range
 rank
 rawr
-rd
 reals
 rebuilt
 regard
@@ -2784,7 +2758,6 @@ teaches
 teased
 techno
 ted
-teh
 tense
 terribly
 tests
@@ -2841,8 +2814,6 @@ wtf
 wwii
 yelled
 yonder
-aaah
-aaand
 abandon
 absence
 absorb
@@ -3732,11 +3703,6 @@ yea
 yoga
 yolky
 yous
-aaaaah
-aaaaand
-aaaand
-aaargh
-aaaugh
 abhors
 abiding
 aboard
@@ -3764,7 +3730,6 @@ agents
 aghast
 agitated
 agress
-ahhhhh
 aided
 aie
 aisle
@@ -3924,7 +3889,6 @@ beths
 betrayal
 bettered
 beutiful
-bff
 bhangra
 bi
 bids
@@ -4406,7 +4370,6 @@ educated
 educator
 eerie
 einstein
-el
 elation
 elder
 elected
