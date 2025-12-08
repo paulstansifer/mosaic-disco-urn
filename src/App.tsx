@@ -116,7 +116,34 @@ function TrashDropZone() {
 function App() {
   const [initialState] = useState(() => {
     let currentPool = INITIAL_POOL_SOURCE;
-    const wordsList = INITIAL_SENTENCE_TEXT.split(' ').filter(w => w.length > 0);
+    let sentenceText = INITIAL_SENTENCE_TEXT;
+
+    if (window.location.hash) {
+      try {
+        const decoded = decodeURIComponent(window.location.hash.substring(1));
+        // Verify we can form this sentence
+        let tempPool = INITIAL_POOL_SOURCE;
+        let possible = true;
+        // Simple check: can we remove all chars?
+        for (const char of decoded) {
+          if (char === ' ') continue;
+          const res = updatePoolRemove(tempPool, char);
+          if (res === null) {
+            possible = false;
+            break;
+          }
+          tempPool = res;
+        }
+
+        if (possible) {
+          sentenceText = decoded;
+        }
+      } catch (e) {
+        console.error("Failed to parse initial sentence from hash", e);
+      }
+    }
+
+    const wordsList = sentenceText.split(/((?:[,:]|!!|\s+))/).filter(w => w.trim().length > 0);
     const initialWords = wordsList.map((word, index) => ({ id: index + 1, text: word }));
 
     for (const word of wordsList) {
@@ -711,6 +738,22 @@ function App() {
     });
   };
 
+  const handleShare = async () => {
+    let sentenceText = words.map(w => w.text).join(' ').trim();
+    // Remove spaces before punctuation
+    sentenceText = sentenceText.replace(/\s+([,:]|!!)/g, '$1');
+
+    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(sentenceText)}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      alert("Failed to copy link to clipboard.");
+    }
+  };
+
   const handleShuffle = () => {
     setLetterPool(prev => shuffleString(prev.replace(/ /g, '')));
   };
@@ -790,12 +833,13 @@ function App() {
 
           <div className="input-section">
             <div className="button-container">
-              <button className="shuffle-btn" onClick={handleShuffle} title="Shuffle & Compact">
-                🔀
-              </button>
+
               <button className="add-word-btn" onClick={handleAddWord}>+</button>
               <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
                 💾
+              </button>
+              <button className="share-btn" onClick={handleShare} title="Share Sentence">
+                🔗
               </button>
               <TrashDropZone />
               <button className="clear-btn" onClick={handleClearAll} title="Clear All">
@@ -807,7 +851,12 @@ function App() {
                 Click "+" or press the spacebar to type a new word
               </div>
             )}
-            <LetterPool letterPool={letterPool} />
+            <div className="pool-area">
+              <button className="shuffle-btn-portrait" onClick={handleShuffle} title="Shuffle & Compact">
+                🔀
+              </button>
+              <LetterPool letterPool={letterPool} />
+            </div>
             <SuggestionColumns
               deletedWords={deletedWords}
               suggestedWords={suggestedWords}
@@ -822,7 +871,7 @@ function App() {
             />
           </div>
           <div className="about">
-            <hr />
+
             <a href="https://qwantz.com">Dinosaur Comics</a> is a long-running webcomic by Ryan North. In 2010, the <a href="https://www.qwantz.com/index.php?comic=1663">1663rd comic</a> discussed the way that some scientists used to use anagrams as a sort of <a href="https://en.wikipedia.org/wiki/Commitment_scheme">commitment scheme</a> to claim priority on good ideas. The punchline to the comic was given in anagram form, and Ryan North later provided some <a href="https://www.qwantz.com/index.php?comic=1665">hints</a> to narrow the search space, but the real punchline has not yet been recovered!
           </div>
         </div>
