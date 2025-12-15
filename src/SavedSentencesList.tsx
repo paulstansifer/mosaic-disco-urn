@@ -22,9 +22,15 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSe
             <ul className="saved-sentences-list">
                 {sentences.map((sentence, index) => (
                     <li key={index} className="saved-sentence-item">
-                        <span
+                        <a
+                            href={`#${encodeURIComponent(sentence.text)}`}
                             className="saved-sentence-text"
-                            onClick={() => onSelect(sentence.text)}
+                            onClick={() => {
+                                // We don't preventDefault here so the URL updates,
+                                // but we also fire onSelect to update state immediately
+                                // since the app doesn't listen to hash changes dynamically.
+                                onSelect(sentence.text);
+                            }}
                             title="Click to load this sentence"
                         >
                             {sentence.text}
@@ -33,7 +39,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSe
                                     {sentence.pool}
                                 </span>
                             )}
-                        </span>
+                        </a>
                         <button
                             className="delete-saved-btn"
                             onClick={(e) => {

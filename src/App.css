@@ -309,6 +309,8 @@ body {
   border-radius: 4px;
   transition: background-color 0.2s;
   font-size: 80%;
+  text-decoration: none;
+  color: inherit;
 }
 
 .saved-sentence-text:hover {
