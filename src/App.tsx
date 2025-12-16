@@ -747,10 +747,20 @@ function App() {
 
     try {
       await navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
     } catch (err) {
       console.error('Failed to copy: ', err);
-      alert("Failed to copy link to clipboard.");
+    }
+  };
+
+  const handleCopyText = async () => {
+    let sentenceText = words.map(w => w.text).join(' ').trim();
+    // Remove spaces before punctuation
+    sentenceText = sentenceText.replace(/\s+([,:]|!!)/g, '$1');
+
+    try {
+      await navigator.clipboard.writeText(sentenceText);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
     }
   };
 
@@ -840,6 +850,9 @@ function App() {
               </button>
               <button className="share-btn" onClick={handleShare} title="Share Sentence">
                 🔗
+              </button>
+              <button className="copy-text-btn" onClick={handleCopyText} title="Copy Text">
+                📋
               </button>
               <TrashDropZone />
               <button className="clear-btn" onClick={handleClearAll} title="Clear All">
