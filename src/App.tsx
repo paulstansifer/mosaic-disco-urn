@@ -828,13 +828,17 @@ function App() {
     >
       <div className="app">
         <div className="content-wrapper">
-          <SentenceBuilder
-            words={words}
-            activeId={activeId}
-            invalidIds={validationErrors.invalidIds}
-            onWordUpdate={handleWordUpdate}
-            onWordCommit={handleWordCommit}
-          />
+          <div className="main-sentence-row">
+            <button className="add-word-side-btn" onClick={handleAddWord} title="Add Word">+</button>
+            <SentenceBuilder
+              words={words}
+              activeId={activeId}
+              invalidIds={validationErrors.invalidIds}
+              onWordUpdate={handleWordUpdate}
+              onWordCommit={handleWordCommit}
+            />
+            <TrashDropZone />
+          </div>
           <div className="validation-errors">
             {validationErrors.messages.map((msg, i) => (
               <div key={i}>{msg}</div>
@@ -844,7 +848,7 @@ function App() {
           <div className="input-section">
             <div className="button-container">
 
-              <button className="add-word-btn" onClick={handleAddWord}>+</button>
+
               <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
                 💾
               </button>
@@ -854,7 +858,7 @@ function App() {
               <button className="copy-text-btn" onClick={handleCopyText} title="Copy Text">
                 📋
               </button>
-              <TrashDropZone />
+
               <button className="clear-btn" onClick={handleClearAll} title="Clear All">
                 🧹
               </button>
