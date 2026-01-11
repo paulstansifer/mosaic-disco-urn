@@ -26,7 +26,7 @@ const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w =>
 const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 
 const INITIAL_POOL_SOURCE = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
-const INITIAL_SENTENCE_TEXT = "I !!";
+const INITIAL_SENTENCE_TEXT = "I fundamental !!";
 
 const shuffleString = (str: string) => {
   const arr = str.split('');
@@ -190,6 +190,12 @@ function App() {
         }
       });
 
+      // Rule: The word "fundamental" must be present.
+      const fundamentalWord = words.find(w => w.text === "fundamental");
+      if (!fundamentalWord) {
+        newErrors.push("The word 'fundamental' must be present.");
+      }
+
       // Rule 1: There must be one eight-letter word.
       const eightLetterWords = words.filter(w => w.text.length === 8);
       if (eightLetterWords.length !== 1) {
@@ -197,19 +203,16 @@ function App() {
         eightLetterWords.forEach(w => newInvalidIds.add(w.id));
       }
 
-      // Rule 2: The eight-letter word must be adjacent to "fundamental".
-      if (eightLetterWords.length === 1) {
+      // Rule 2: The eight-letter word must be adjacent to the word "fundamental".
+      if (eightLetterWords.length === 1 && fundamentalWord) {
         const eightLetterWord = eightLetterWords[0];
         const eightLetterIndex = words.findIndex(w => w.id === eightLetterWord.id);
-        const fundamentalIndex = words.findIndex(w => w.text === "fundamental");
+        const fundamentalIndex = words.findIndex(w => w.id === fundamentalWord.id);
 
-        if (fundamentalIndex === -1) {
-          newErrors.push("The word 'fundamental' is missing.");
-        } else if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
-          newErrors.push("The eight-letter word must be next to 'fundamental'.");
+        if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
+          newErrors.push("The eight-letter word must be next to the word 'fundamental'.");
           newInvalidIds.add(eightLetterWord.id);
-          const fundamentalWord = words[fundamentalIndex];
-          if (fundamentalWord) newInvalidIds.add(fundamentalWord.id);
+          newInvalidIds.add(fundamentalWord.id);
         }
       }
 
@@ -252,7 +255,10 @@ function App() {
 
   useEffect(() => {
     const poolCount = letterPool.replace(/ /g, '').length;
-    const sentenceCount = words.reduce((acc, w) => acc + w.text.replace(/ /g, '').length, 0);
+    const sentenceCount = words.reduce((acc, w) => {
+      if (w.isDestroyed) return acc;
+      return acc + w.text.replace(/ /g, '').length;
+    }, 0);
     const total = poolCount + sentenceCount;
 
     if (total !== 102) {

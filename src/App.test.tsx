@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import App from './App';
@@ -75,18 +75,25 @@ describe('App Interaction', () => {
      */
     it('steals letters from existing words if pool is empty', async () => {
         const user = userEvent.setup();
-        render(<App />);
+        const { container } = render(<App />);
+        const wordRow = container.querySelector('.word-row');
+        expect(wordRow).toBeInTheDocument();
 
-        expect(screen.getByText('fundamental')).toBeInTheDocument();
+        expect(within(wordRow!).getByText('fundamental')).toBeInTheDocument();
 
-        // The letter 'm' is not in the initial pool, so it must be stolen.
+        // The letter 'm' is in the initial pool once. We use it.
+        await user.click(screen.getByRole('button', { name: '+' }));
+        await user.keyboard('m{Enter}');
+
+        // Now we try to use it again, and it must be stolen.
         await user.click(screen.getByRole('button', { name: '+' }));
         await user.keyboard('m');
 
+
         // The word "fundamental" should be marked for destruction.
         await waitFor(() => {
-            expect(screen.queryByText('fundamental')).not.toBeInTheDocument();
-        });
+            expect(within(wordRow!).queryByText('fundamental')).not.toBeInTheDocument();
+        }, { timeout: 1000 }); // Wait for animation
 
         const input = screen.getByRole('textbox');
         expect(input).toHaveValue('m');
