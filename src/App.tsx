@@ -197,26 +197,28 @@ function App() {
         eightLetterWords.forEach(w => newInvalidIds.add(w.id));
       }
 
-      // Rule 2: The eight-letter word must be adjacent to "fundamental".
-      if (eightLetterWords.length === 1) {
-        const eightLetterWord = eightLetterWords[0];
-        const eightLetterIndex = words.findIndex(w => w.id === eightLetterWord.id);
-        const fundamentalIndex = words.findIndex(w => w.text === "fundamental");
+      const fundamentalIndex = words.findIndex(w => w.text === "fundamental");
+      if (fundamentalIndex === -1) {
+        newErrors.push("The word 'fundamental' must be present.");
+      } else {
+        // Rule 2: The eight-letter word must be adjacent to "fundamental".
+        if (eightLetterWords.length === 1) {
+          const eightLetterWord = eightLetterWords[0];
+          const eightLetterIndex = words.findIndex(w => w.id === eightLetterWord.id);
 
-        if (fundamentalIndex === -1) {
-          newErrors.push("The word 'fundamental' is missing.");
-        } else if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
-          newErrors.push("The eight-letter word must be next to 'fundamental'.");
-          newInvalidIds.add(eightLetterWord.id);
-          const fundamentalWord = words[fundamentalIndex];
-          if (fundamentalWord) newInvalidIds.add(fundamentalWord.id);
+          if (Math.abs(eightLetterIndex - fundamentalIndex) !== 1) {
+            newErrors.push("The eight-letter word must be next to 'fundamental'.");
+            newInvalidIds.add(eightLetterWord.id);
+            const fundamentalWord = words[fundamentalIndex];
+            if (fundamentalWord) newInvalidIds.add(fundamentalWord.id);
+          }
         }
       }
 
       // Rule 3: "!!" must be at the end.
       const lastWord = words[words.length - 1];
       if (!lastWord || lastWord.text !== "!!") {
-        newErrors.push("'!!' must be at the very end of the sentence.");
+        newErrors.push("The punchline must end with '!!'");
         if (words.find(w => w.text === "!!")) {
           const bangWord = words.find(w => w.text === "!!");
           if (bangWord) newInvalidIds.add(bangWord.id);
@@ -227,7 +229,7 @@ function App() {
       if (lastWord && lastWord.text === "!!") {
         const secondToLastWord = words[words.length - 2];
         if (!secondToLastWord || !secondToLastWord.text.endsWith("w")) {
-          newErrors.push("The word before '!!' must end in 'w'.");
+          newErrors.push("The last word must end in 'w'.");
           if (secondToLastWord) newInvalidIds.add(secondToLastWord.id);
         }
       }
@@ -237,7 +239,7 @@ function App() {
       const commaIndex = words.findIndex(w => w.text === ",");
 
       if (colonIndex !== -1 && commaIndex !== -1 && colonIndex > commaIndex) {
-        newErrors.push("':' must come before ','.");
+        newErrors.push("The colon must come before the comma.");
         const colonWord = words[colonIndex];
         const commaWord = words[commaIndex];
         if (colonWord) newInvalidIds.add(colonWord.id);
