@@ -23,10 +23,11 @@ global_settings {
 camera {
     location -12*z+3*y
     direction 1.5*z
-    right     x
+    right     x  // square image
     look_at   <0,0,0>
 }
 
+// Need a bunch of light around it!
 #for (idx,0,14)
     light_source {
         <0,0,20>
@@ -39,13 +40,14 @@ camera {
                 no_image
             }
         }
+        // Some up, some down:
         translate y * (mod(idx, 2) - 0.5) * 10
         rotate y*(idx/14)*360
     }
 #end
 
 
-#local urn = 
+#local Urn = 
     lathe {
         cubic_spline
         7
@@ -55,8 +57,9 @@ camera {
 
 intersection {
     object {
-        urn
+        Urn
     }
+    // Clip it a little bit to stay close to the flecks:
     plane {
         y, 2.89
     }
@@ -107,20 +110,22 @@ intersection {
 
 #local Level = -2.9;
 #while (Level < 2.6) 
-    #local PrevContact = trace(urn, Level*y - 100*z, z);
+    #local PrevContact = trace(Urn, Level*y - 100*z, z);
 
-    #while (vlength(trace(urn, Level*y - 100*z, z) - PrevContact) < (FleckWidth + FleckSpacing*0.3))
+    // Try to keep distance-along-the-surface approximately constant:
+    #while (vlength(trace(Urn, Level*y - 100*z, z) - PrevContact) < (FleckWidth + FleckSpacing*0.3))
         #local Level = Level + 0.05;
     #end
 
 
-    #local Circumfrence = abs(trace(urn, Level*y - 100*z, z).z) * 2 * pi;
+    #local Circumfrence = abs(trace(Urn, Level*y - 100*z, z).z) * 2 * pi;
     
     #for (ang, 0, 360,  360/ (Circumfrence / (FleckWidth + FleckSpacing)))
+        // Hide the seam by rotating it away from the viewer. It's classic!
         #local dir = (ang + 180) * y;
 
         #local norm = <0,0,0>;
-        #local contact = trace(urn, vrotate(Level*y-100*z, dir), vrotate(z, dir), norm);
+        #local contact = trace(Urn, vrotate(Level*y-100*z, dir), vrotate(z, dir), norm);
 
         object {
             Fleck(TRexFn(contact.x, contact.y, contact.z))
