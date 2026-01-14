@@ -20,7 +20,6 @@ global_settings {
      }
 }
 
-
 camera {
     location -12*z+3*y
     direction 1.5*z
@@ -59,14 +58,14 @@ intersection {
         urn
     }
     plane {
-        y, 2.93
+        y, 2.89
     }
     finish { reflection {0.0} ambient 0.0 diffuse 0.0 specular 0.05 roughness 0.05 }
     pigment { Black }
 }
 
 
-#local mirror = texture {
+#local Mirror = texture {
     finish { 
         reflection { 0.9 }
         specular 0.9 roughness 0.02
@@ -75,15 +74,15 @@ intersection {
     pigment { White*0.1 }
 }
 
-#local fleck_width = 0.2;
-#local fleck_spacing = 0.015;
-#local fleck_thickness = 0.05;
+#local FleckWidth = 0.2;
+#local FleckSpacing = 0.015;
+#local FleckThickness = 0.05;
 
 #macro Fleck(FleckColor)
     intersection {
         box {
-            < -fleck_width/2, -fleck_width/2, -fleck_thickness>,
-            <fleck_width/2, fleck_width/2, 2*fleck_thickness>
+            < -FleckWidth/2, -FleckWidth/2, -FleckThickness>,
+            <FleckWidth/2, FleckWidth/2, 2*FleckThickness>
             material { M_Glass3 }
         }
         plane {
@@ -97,72 +96,43 @@ intersection {
             }
         }
         plane {
-            z, fleck_thickness
+            z, FleckThickness
             texture { 
-                mirror 
+                Mirror 
                 pigment { color FleckColor }
             }
         }
     }
 #end
 
-#local fleck = 
-    intersection {
-        box {
-            < -fleck_width/2, -fleck_width/2, -fleck_thickness>,
-            <fleck_width/2, fleck_width/2, 2*fleck_thickness>
-            material { M_Glass3 }
-        }
-        plane {
-            -z, 0
-            material { M_Glass3 }
-        }
-        plane {
-            z, fleck_thickness
-            texture { mirror }
-        }
-    }
+#local Level = -2.9;
+#while (Level < 2.6) 
+    #local PrevContact = trace(urn, Level*y - 100*z, z);
 
-
-#local last_circumfrenence = -1;
-
-#local level = -2.9;
-#while (level < 2.6) 
-    #local prev_contact = trace(urn, level*y - 100*z, z);
-
-    #while (vlength(trace(urn, level*y - 100*z, z) - prev_contact) < (fleck_width + fleck_spacing*0.3))
-        #local level = level + 0.05;
+    #while (vlength(trace(urn, Level*y - 100*z, z) - PrevContact) < (FleckWidth + FleckSpacing*0.3))
+        #local Level = Level + 0.05;
     #end
 
 
-    #local circumfrence = abs(trace(urn, level*y - 100*z, z).z) * 2 * pi;
+    #local Circumfrence = abs(trace(urn, Level*y - 100*z, z).z) * 2 * pi;
     
-    #for (ang, 0, 360,  360/ (circumfrence / (fleck_width + fleck_spacing)))
+    #for (ang, 0, 360,  360/ (Circumfrence / (FleckWidth + FleckSpacing)))
         #local dir = (ang + 180) * y;
 
         #local norm = <0,0,0>;
-        #local contact = trace(urn, vrotate(level*y-100*z, dir), vrotate(z, dir), norm);
-
-        #local color_here = TRexFn(contact.x, contact.y, contact.z);
+        #local contact = trace(urn, vrotate(Level*y-100*z, dir), vrotate(z, dir), norm);
 
         object {
-            Fleck(color_here)
+            Fleck(TRexFn(contact.x, contact.y, contact.z))
 
             rotate Rand_Normal(0.0, 2.0, RdmA)*y
             rotate Rand_Normal(0.0, 2.0, RdmA)*x
             rotate Rand_Normal(0.0, 0.5, RdmA)*z
 
-            translate -z*fleck_thickness*1.5
+            translate -z*FleckThickness*1.5
             rotate x * (VAngleD(-dir, norm) - 90)
             rotate dir
             translate contact
-            // finish { 
-            //     reflection { 0.9 }
-            //     specular 0.9 roughness 0.02
-            //     diffuse 0.2 ambient 0
-            // }
-            // pigment { White*0.1 }
-            //pigment { color color_here  }
         }
     #end
 #end
