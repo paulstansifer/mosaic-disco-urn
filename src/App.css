@@ -99,6 +99,10 @@ body {
   /* Reserve some space to avoid layout shifts */
 }
 
+.solution-message {
+  color: black;
+}
+
 @keyframes destroy {
   from {
     opacity: 1;
