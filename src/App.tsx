@@ -846,6 +846,9 @@ function App() {
               <div key={i}>{msg}</div>
             ))}
           </div>
+          {validationErrors.messages.length === 0 && letterPool.replace(/ /g, '').length === 0 && (
+            <div className="solution-message">For all we know, that's the solution!</div>
+          )}
 
           <div className="input-section">
             <div className="button-container">
