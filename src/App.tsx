@@ -21,6 +21,7 @@ import LetterPool from './LetterPool';
 import SuggestionColumns from './SuggestionColumns';
 import SentenceBuilder from './SentenceBuilder';
 import SavedSentencesList, { type SavedSentence } from './SavedSentencesList';
+import { type DeletedWord } from './types';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
@@ -163,7 +164,7 @@ function App() {
 
   const [words, setWords] = useState<Array<{ id: number; text: string; isEditing?: boolean; isDestroyed?: boolean }>>(initialState.words);
   const [letterPool, setLetterPool] = useState(initialState.pool);
-  const [deletedWords, setDeletedWords] = useState<string[]>([]);
+  const [deletedWords, setDeletedWords] = useState<DeletedWord[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [savedSentences, setSavedSentences] = useState<SavedSentence[]>([]);
   const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number> }>({ messages: [], invalidIds: new Set() });
@@ -423,13 +424,21 @@ function App() {
     if (wordsToDestroyIds.size > 0) {
       const destroyedWords = words.filter(w => wordsToDestroyIds.has(w.id));
       setDeletedWords(prev => {
-        const newTexts = destroyedWords
-          .map(w => w.text)
-          .filter(t => t.trim().length > 0);
-        const combined = [...newTexts, ...prev];
-        const unique = Array.from(new Set(combined));
-        return unique.slice(0, 20);
+        const newDeleted = destroyedWords
+          .map(word => {
+            const index = words.findIndex(w => w.id === word.id);
+            return {
+              text: word.text,
+              originalIndex: index,
+              wordAfter: words[index + 1]?.text ?? null,
+            };
+          })
+          .filter(d => d.text.trim().length > 0);
+
+        const combined = [...newDeleted, ...prev];
+        return combined.slice(0, 20);
       });
+
 
       setTimeout(() => {
         setWords(prev => prev.filter(w => !wordsToDestroyIds.has(w.id)));
@@ -457,9 +466,13 @@ function App() {
     // Add to deleted stack
     if (wordToDelete.text.trim().length > 0) {
       setDeletedWords(prev => {
-        const combined = [wordToDelete.text, ...prev];
-        const unique = Array.from(new Set(combined));
-        return unique.slice(0, 20);
+        const newDeleted = {
+          text: wordToDelete.text,
+          originalIndex: index,
+          wordAfter: words[index + 1]?.text ?? null,
+        };
+        const combined = [newDeleted, ...prev];
+        return combined.slice(0, 20);
       });
     }
 
@@ -629,12 +642,12 @@ function App() {
     setLetterPool(newPool);
   };
 
-  const handleDeletedWordClick = (word: string) => {
+  const handleDeletedWordClick = (deletedWord: DeletedWord, index: number) => {
     let currentPool = letterPool;
     const wordsToDestroyIds = new Set<number>();
 
     // Check if we can form the word (including stealing)
-    for (const char of word) {
+    for (const char of deletedWord.text) {
       const poolAfterRemove = updatePoolRemove(currentPool, char);
 
       if (poolAfterRemove !== null) {
@@ -670,9 +683,35 @@ function App() {
     // Success - apply changes
     setWords(prev => {
       const newId = Math.max(0, ...prev.map(w => w.id)) + 1;
-      const insertIdx = getInsertionIndex(prev);
+
+      let insertIdx = -1;
+
+      if (deletedWord.wordAfter) {
+        // Find all occurrences of the word that was originally after the deleted word
+        const afterIndices = prev.reduce((acc, word, idx) => {
+          if (word.text === deletedWord.wordAfter) {
+            acc.push(idx);
+          }
+          return acc;
+        }, [] as number[]);
+
+        if (afterIndices.length > 0) {
+          // Find the occurrence that is closest to the original index
+          const closest = afterIndices.reduce((prev, curr) =>
+            Math.abs(curr - deletedWord.originalIndex) < Math.abs(prev - deletedWord.originalIndex) ? curr : prev
+          );
+          insertIdx = closest;
+        }
+      }
+
+
+      if (insertIdx === -1) {
+        insertIdx = getInsertionIndex(prev);
+      }
+
+
       const newWords = [...prev];
-      newWords.splice(insertIdx, 0, { id: newId, text: word, isEditing: false });
+      newWords.splice(insertIdx, 0, { id: newId, text: deletedWord.text, isEditing: false });
 
       return newWords.map(w => {
         if (wordsToDestroyIds.has(w.id)) {
@@ -683,8 +722,6 @@ function App() {
     });
 
     setDeletedWords(prev => {
-      const index = prev.indexOf(word);
-      if (index === -1) return prev;
       const newStack = [...prev];
       newStack.splice(index, 1);
       return newStack;

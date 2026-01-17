@@ -1,10 +1,11 @@
 import React from 'react';
+import { type DeletedWord } from './types';
 
 interface SuggestionColumnsProps {
-    deletedWords: string[];
+    deletedWords: DeletedWord[];
     suggestedWords: string[];
     suggestedEndWords: string[];
-    onDeletedWordClick: (word: string) => void;
+    onDeletedWordClick: (word: DeletedWord, index: number) => void;
     onSuggestedClick: (word: string) => void;
 }
 
@@ -18,14 +19,14 @@ const SuggestionColumns: React.FC<SuggestionColumnsProps> = ({
     return (
         <div className="suggestions-grid">
             <div className="suggestion-col center">
-                {deletedWords.map((word, index) => (
+                {deletedWords.map((deletedWord, index) => (
                     <button
                         key={`deleted-${index}`}
                         className="suggestion-chip"
                         style={{ opacity: 0.7 }}
-                        onClick={() => onDeletedWordClick(word)}
+                        onClick={() => onDeletedWordClick(deletedWord, index)}
                     >
-                        {word}
+                        {deletedWord.text}
                     </button>
                 ))}
             </div>
