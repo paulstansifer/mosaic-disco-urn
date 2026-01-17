@@ -12,7 +12,7 @@ describe('App Interaction', () => {
         const { container } = render(<App />);
         const wordRow = container.querySelector('.word-row');
         expect(wordRow).toHaveTextContent('I');
-        expect(wordRow).toHaveTextContent('fundamental');
+        expect(wordRow).not.toHaveTextContent('fundamental');
         expect(wordRow).toHaveTextContent('!!');
     });
 
@@ -118,6 +118,6 @@ describe('Validation Rules', () => {
     it('displays initial validation errors on render', () => {
         render(<App />);
         expect(screen.getByText("There must be exactly one eight-letter word.")).toBeInTheDocument();
-        expect(screen.getByText("The word before '!!' must end in 'w'.")).toBeInTheDocument();
+        expect(screen.getByText("The last word must end in 'w'.")).toBeInTheDocument();
     });
 });
