@@ -372,12 +372,15 @@ function App() {
     // Process all parts of the new text
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      // Skip empty parts resulting from multiple spaces, but always process the first part (even if empty)
+      // Skip empty parts resulting from multiple spaces
       if (i > 0 && part === "") continue;
 
       const formed = formString(part);
       processedParts.push({ text: formed, isNew: i > 0 });
     }
+
+    // Filter out empty parts, but keep if it's the only part (for the current editing word)
+    const finalParts = processedParts.filter((p, i) => p.text.length > 0 || (i === 0 && processedParts.length === 1));
 
     // Apply updates to state
     setLetterPool(currentPool);
@@ -391,19 +394,19 @@ function App() {
       const numericIds = newWords.map(w => typeof w.id === 'number' ? w.id : 0);
       let nextId = Math.max(0, ...numericIds) + 1;
 
-      if (processedParts.length > 0) {
+      if (finalParts.length > 0) {
         // The first part updates the existing word
         replacements.push({
           ...newWords[idx],
-          text: processedParts[0].text,
-          isEditing: processedParts.length === 1 // Keep editing if it's the only one
+          text: finalParts[0].text,
+          isEditing: finalParts.length === 1 && processedParts.length === 1
         });
 
         // Subsequent parts become new words
-        for (let i = 1; i < processedParts.length; i++) {
+        for (let i = 1; i < finalParts.length; i++) {
           replacements.push({
             id: nextId++,
-            text: processedParts[i].text,
+            text: finalParts[i].text,
             isEditing: true
           });
         }
@@ -415,7 +418,7 @@ function App() {
           });
         }
       } else {
-        // Should not strictly happen with split logic, but safe fallback
+        // Fallback for safety
         replacements.push({ ...newWords[idx], text: '' });
       }
 
@@ -430,6 +433,19 @@ function App() {
         return w;
       });
     });
+
+    // Adjust caret position for added and destroyed words
+    const addedWordsCount = finalParts.length - 1;
+    const wordsToDestroy = words.filter(w => wordsToDestroyIds.has(w.id));
+    const destroyedBeforeCaretCount = wordsToDestroy.filter(w => {
+      const idx = words.indexOf(w);
+      return idx !== -1 && idx < caretIndex;
+    }).length;
+
+    const totalShift = (wordIndex < caretIndex ? addedWordsCount : 0) - destroyedBeforeCaretCount;
+    if (totalShift !== 0) {
+      setCaretIndex(prev => Math.max(0, prev + totalShift));
+    }
 
     if (wordsToDestroyIds.size > 0) {
       const destroyedWords = words.filter(w => wordsToDestroyIds.has(w.id));
@@ -449,6 +465,10 @@ function App() {
   };
 
   const handleDestroyWord = (id: number | string) => {
+    const index = words.findIndex(w => w.id === id);
+    if (index !== -1 && index < caretIndex) {
+      setCaretIndex(prev => Math.max(0, prev - 1));
+    }
     setWords(prev => prev.map(w => w.id === id ? { ...w, isDestroyed: true } : w));
     setTimeout(() => {
       setWords(prev => prev.filter(w => w.id !== id));
@@ -567,7 +587,6 @@ function App() {
 
             if (!isFirstI && !isLastBang) {
               handleWordDelete(wordToDelete.id);
-              setCaretIndex(prev => prev - 1);
             }
           }
         }
@@ -741,6 +760,21 @@ function App() {
         return w;
       });
     });
+
+    // Adjust caret for stolen words and new insertion
+    const wordsToDestroy = words.filter(w => wordsToDestroyIds.has(w.id));
+    const destroyedBeforeCaretCount = wordsToDestroy.filter(w => {
+      const idx = words.indexOf(w);
+      return idx !== -1 && idx < caretIndex;
+    }).length;
+
+    const insertIdx = getInsertionIndex(words);
+    const addedBeforeCaret = insertIdx <= caretIndex;
+    const totalShift = (addedBeforeCaret ? 1 : 0) - destroyedBeforeCaretCount;
+
+    if (totalShift !== 0) {
+      setCaretIndex(prev => Math.max(0, prev + totalShift));
+    }
 
     setDeletedWords(prev => {
       const index = prev.indexOf(word);

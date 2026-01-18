@@ -38,7 +38,7 @@ const WordChip: React.FC<WordChipProps> = ({ id, word, isInvalid, isEditing, isD
           value={word}
           onChange={(e) => onUpdate?.(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
               e.preventDefault();
               onCommit?.();
             }
