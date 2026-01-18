@@ -48,7 +48,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSe
                             }}
                             title="Delete saved sentence"
                         >
-                            <span className="material-icons-round">delete</span>
+                            <span className="material-icons-outlined">delete</span>
                         </button>
                     </li>
                 ))}
