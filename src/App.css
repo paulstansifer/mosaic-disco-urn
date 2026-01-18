@@ -164,6 +164,10 @@ body {
   align-items: center;
 }
 
+.button-container button .material-icons-outlined {
+  vertical-align: middle;
+}
+
 .add-word-btn,
 .save-btn,
 .share-btn,
