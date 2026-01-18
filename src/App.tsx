@@ -108,7 +108,7 @@ function TrashDropZone() {
       ref={setNodeRef}
       className={`trash-drop-zone ${isOver ? 'over' : ''}`}
     >
-      🗑️
+      <span className="material-icons-round">delete</span>
     </div>
   );
 }
@@ -855,17 +855,17 @@ function App() {
 
 
               <button className="save-btn" onClick={handleSaveSentence} title="Save Sentence">
-                💾
+                <span className="material-icons-round">save</span>
               </button>
               <button className="share-btn" onClick={handleShare} title="Share Sentence">
-                🔗
+                <span className="material-icons-round">link</span>
               </button>
               <button className="copy-text-btn" onClick={handleCopyText} title="Copy Text">
-                📋
+                <span className="material-icons-round">content_copy</span>
               </button>
 
               <button className="clear-btn" onClick={handleClearAll} title="Clear All">
-                🧹
+                <span className="material-icons-round">delete_sweep</span>
               </button>
             </div>
             {!hasInteracted && (
@@ -875,7 +875,7 @@ function App() {
             )}
             <div className="pool-area">
               <button className="shuffle-btn-portrait" onClick={handleShuffle} title="Shuffle & Compact">
-                🔀
+                <span className="material-icons-round">shuffle</span>
               </button>
               <LetterPool letterPool={letterPool} />
             </div>

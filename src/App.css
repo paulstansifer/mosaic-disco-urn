@@ -158,10 +158,12 @@ body {
   line-height: 1.2;
 }
 
-.button-container {
+.button-container,
+.trash-drop-zone {
   display: flex;
   gap: 1rem;
   align-items: center;
+  justify-content: center;
 }
 
 .add-word-btn,
@@ -403,11 +405,17 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.2rem;
   padding: 4px;
   border-radius: 4px;
   opacity: 0.6;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-saved-btn .material-icons-round {
+  font-size: 1.2rem;
 }
 
 .delete-saved-btn:hover {
