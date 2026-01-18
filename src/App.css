@@ -433,6 +433,23 @@ body {
   width: 100%;
 }
 
+.caret-container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  /* Ensure it's interactive */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  top: 20px;
+}
+
+.caret-svg path {
+  fill: #FFFFFF;
+  stroke: #ccc;
+  stroke-width: 1px;
+}
+
 .prefix-toggle-btn {
   background: rgba(0, 0, 0, 0.05);
   border: none;

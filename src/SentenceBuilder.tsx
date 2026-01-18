@@ -1,25 +1,25 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import WordChip from './WordChip';
+import Caret from './Caret';
 import prefixTextRaw from './1663_prefix.txt?raw';
 
-interface Word {
-    id: number;
-    text: string;
-    isEditing?: boolean;
-    isDestroyed?: boolean;
-}
-
 interface SentenceBuilderProps {
-    words: Word[];
-    activeId: number | null;
-    invalidIds: Set<number>;
-    onWordUpdate: (id: number, newText: string) => void;
-    onWordCommit: (id: number) => void;
+    items: Array<{
+        id: number | string;
+        text: string;
+        isCaret?: boolean;
+        isEditing?: boolean;
+        isDestroyed?: boolean;
+    }>;
+    activeId: number | string | null;
+    invalidIds: Set<number | string>;
+    onWordUpdate: (id: number | string, newText: string) => void;
+    onWordCommit: (id: number | string) => void;
 }
 
 const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
-    words,
+    items,
     activeId,
     invalidIds,
     onWordUpdate,
@@ -50,7 +50,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
 
     return (
         <div className="word-row">
-            <SortableContext items={words} strategy={horizontalListSortingStrategy}>
+            <SortableContext items={items} strategy={horizontalListSortingStrategy}>
                 <div className="word-chip-container">
                     <div className="prefix-container">
                         <button
@@ -67,23 +67,27 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
                         )}
                     </div>
                     <div className="chips-area" ref={chipsAreaRef}>
-                        {words.map((word, index) => {
-                            const isFirstI = index === 0 && word.text === 'I';
-                            const isLastBang = index === words.length - 1 && word.text === '!!';
+                        {items.map((item, index) => {
+                            if (item.isCaret) {
+                                return <Caret key={item.id} id={item.id as string} />;
+                            }
+
+                            const isFirstI = index === 0 && item.text === 'I';
+                            const isLastBang = index === items.length - 1 && item.text === '!!';
                             const isDisabled = isFirstI || isLastBang;
 
                             return (
                                 <WordChip
-                                    key={word.id}
-                                    id={word.id}
-                                    word={word.text}
-                                    isInvalid={invalidIds.has(word.id)}
-                                    isEditing={word.isEditing}
-                                    isDestroyed={word.isDestroyed}
-                                    isDragging={activeId === word.id}
+                                    key={item.id}
+                                    id={item.id}
+                                    word={item.text}
+                                    isInvalid={invalidIds.has(item.id)}
+                                    isEditing={item.isEditing}
+                                    isDestroyed={item.isDestroyed}
+                                    isDragging={activeId === item.id}
                                     disabled={isDisabled}
-                                    onUpdate={(text) => onWordUpdate(word.id, text)}
-                                    onCommit={() => onWordCommit(word.id)}
+                                    onUpdate={(text) => onWordUpdate(item.id, text)}
+                                    onCommit={() => onWordCommit(item.id)}
                                 />
                             );
                         })}

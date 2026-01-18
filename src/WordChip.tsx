@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface WordChipProps {
-  id: number;
+  id: number | string;
   word: string;
   isInvalid?: boolean;
   isEditing?: boolean;
@@ -27,6 +27,7 @@ const WordChip: React.FC<WordChipProps> = ({ id, word, isInvalid, isEditing, isD
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0 : undefined,
+    border: (id === 'caret' ? false : true) && isDragging ? '1px dashed #4CAF50' : undefined,
   };
 
   if (isEditing) {
