@@ -107,8 +107,9 @@ function TrashDropZone() {
     <div
       ref={setNodeRef}
       className={`trash-drop-zone ${isOver ? 'over' : ''}`}
+      title="Drag a word here to delete it"
     >
-      🗑️
+      <span className="material-icons-round">delete</span>
     </div>
   );
 }
@@ -926,10 +927,10 @@ function App() {
 
           <div className="input-section">
             <div className="button-container">
-              <button className="save-btn" onClick={handleSaveSentence}>💾</button>
-              <button className="share-btn" onClick={handleShare}>🔗</button>
-              <button className="copy-text-btn" onClick={handleCopyText}>📋</button>
-              <button className="clear-btn" onClick={handleClearAll}>🗑️</button>
+              <button className="save-btn" onClick={handleSaveSentence} title="Save sentence"><span className="material-icons-round">save</span></button>
+              <button className="share-btn" onClick={handleShare} title="Copy link to sentence"><span className="material-icons-round">link</span></button>
+              <button className="copy-text-btn" onClick={handleCopyText} title="Copy sentence text"><span className="material-icons-round">content_copy</span></button>
+              <button className="clear-btn" onClick={handleClearAll} title="Clear all words"><span className="material-icons-round">delete</span></button>
             </div>
             {!hasInteracted && (
               <div className="interactive-hint" style={{ fontStyle: 'italic', marginTop: '1rem', color: '#666' }}>
@@ -937,7 +938,7 @@ function App() {
               </div>
             )}
             <div className="pool-area">
-              <button className="shuffle-btn-portrait" onClick={handleShuffle}>🔀</button>
+              <button className="shuffle-btn-portrait" onClick={handleShuffle} title="Shuffle letter pool"><span className="material-icons-round">shuffle</span></button>
               <LetterPool letterPool={letterPool} />
             </div>
           </div>
