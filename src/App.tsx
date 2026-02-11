@@ -973,9 +973,18 @@ function App() {
               )
             ) : null}
           </DragOverlay>
+          <div className="about">
+
+            <p><a href="https://qwantz.com">Dinosaur Comics</a> is a long-running webcomic by Ryan North. In 2010, the <a href="https://www.qwantz.com/index.php?comic=1663">1663rd comic</a> discussed the way that some scientists used to use anagrams as a sort of <a href="https://en.wikipedia.org/wiki/Commitment_scheme">commitment scheme</a> to claim priority on good ideas. The punchline to the comic was given in anagram form, and Ryan North later provided some <a href="https://www.qwantz.com/index.php?comic=1665">hints</a> to narrow the search space, but the puzzle, known as the "Qwantzle", has remained unsolved for more than 15 years.</p>
+
+            <p>"Mosaic Disco Urn" is an anagram of "Dinosaur Comics". It is inspired by <a href="https://cathode.church/@c9a">Ell Bradshaw</a>'s <a href="https://www.afifthofnothing.com/anacryptogram.html">implementation</a>, but I was lazy, and <a href="https://github.com/paulstansifer/mosaic-disco-urn"> it's mostly written by LLMs</a>. I feel bad about that, so here's a <a href="https://github.com/paulstansifer/mosaic-disco-urn/tree/main/public/3d-image/mosaic_disco_urn.pov">hand-made rendering of a mosaic disco urn</a>:</p>
+
+            <p><center><img src="3d-image/mosaic_disco_urn.png" alt="a mosaic disco urn" /></center></p>
+          </div>
         </div>
       </DndContext>
     </div>
+
   );
 }
 
