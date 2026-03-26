@@ -16,6 +16,7 @@ interface SentenceBuilderProps {
     invalidIds: Set<number | string>;
     onWordUpdate: (id: number | string, newText: string) => void;
     onWordCommit: (id: number | string) => void;
+    onWordBackspaceEmpty?: (id: number | string) => void;
 }
 
 const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
@@ -24,6 +25,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
     invalidIds,
     onWordUpdate,
     onWordCommit,
+    onWordBackspaceEmpty,
 }) => {
     const [showPrefix, setShowPrefix] = useState(false);
     const chipsAreaRef = useRef<HTMLDivElement>(null);
@@ -88,6 +90,7 @@ const SentenceBuilder: React.FC<SentenceBuilderProps> = ({
                                     disabled={isDisabled}
                                     onUpdate={(text) => onWordUpdate(item.id, text)}
                                     onCommit={() => onWordCommit(item.id)}
+                                    onBackspaceEmpty={() => onWordBackspaceEmpty?.(item.id)}
                                 />
                             );
                         })}
