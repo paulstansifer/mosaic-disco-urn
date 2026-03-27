@@ -28,6 +28,25 @@ const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filt
 const INITIAL_POOL_SOURCE = "ttttttttttttooooooooooeeeeeeeeaaaaaaallllllnnnnnnuuuuuuiiiiisssssdddddhhhhhyyyyyIIIrrrfffbbwwkcmvg:,!!";
 const INITIAL_SENTENCE_TEXT = "I !!";
 
+const TIE_GROUPS: string[][] = (() => {
+  const counts: Record<string, number> = {};
+  const firstPos: Record<string, number> = {};
+  for (let i = 0; i < INITIAL_POOL_SOURCE.length; i++) {
+    const char = INITIAL_POOL_SOURCE[i];
+    counts[char] = (counts[char] || 0) + 1;
+    if (!(char in firstPos)) firstPos[char] = i;
+  }
+  const groups: Record<number, string[]> = {};
+  // Only include letters and common punctuation in the theory of ties
+  const validChars = Object.keys(counts).filter(c => /[a-zA-Z]/.test(c));
+  validChars.forEach(c => {
+    const n = counts[c];
+    if (!groups[n]) groups[n] = [];
+    groups[n].push(c);
+  });
+  return Object.values(groups).filter(g => g.length > 1);
+})();
+
 const shuffleString = (str: string) => {
   const arr = str.split('');
   for (let i = arr.length - 1; i > 0; i--) {
@@ -181,6 +200,51 @@ function App() {
   const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number | string> }>({ messages: [], invalidIds: new Set() });
   const [hasInteracted, setHasInteracted] = useState(false);
   const [caretIndex, setCaretIndex] = useState<number>(() => getInsertionIndex(initialState.words));
+
+  const isConsistentWithTheoryOfTies = useMemo(() => {
+    // Collect all characters from current words in order
+    const characters: { char: string, index: number }[] = [];
+    let charIndex = 0;
+    for (const word of words) {
+      if (word.isDestroyed) continue;
+      // Use original casing for comparison as the pool has both 'I' and 'i'
+      for (const char of word.text) {
+        characters.push({ char, index: charIndex++ });
+      }
+    }
+
+    if (characters.length === 0) return false;
+
+    // Map each character to its first appearance index
+    const firstAppearances = new Map<string, number>();
+    for (const item of characters) {
+      if (!firstAppearances.has(item.char)) {
+        firstAppearances.set(item.char, item.index);
+      }
+    }
+
+    for (const group of TIE_GROUPS) {
+      let lastAppearanceIndex = -1;
+      let missingLetterInGroup = false;
+
+      for (const char of group) {
+        const firstIdx = firstAppearances.get(char);
+
+        if (firstIdx === undefined) {
+          missingLetterInGroup = true;
+        } else {
+          if (missingLetterInGroup) {
+            return false;
+          }
+          if (firstIdx < lastAppearanceIndex) {
+            return false;
+          }
+          lastAppearanceIndex = firstIdx;
+        }
+      }
+    }
+    return true;
+  }, [words]);
 
   const sentenceItems = useMemo(() => {
     const isEditingAny = words.some(w => w.isEditing);
@@ -948,6 +1012,22 @@ function App() {
               ))}
             </div>
           )}
+
+          <div className="status-messages">
+            {isConsistentWithTheoryOfTies && (
+              <div className="theory-of-ties-note">
+                Consistent with the {' '}
+                <span className="theory-link" title="The 'theory of ties' suggests that for each letter frequency group in the original pool, the first appearance of each letter in the sentence should follow their relative order in that original string.">
+                  'theory of ties'
+                </span>.
+              </div>
+            )}
+            {letterPool.replace(/ /g, '').length === 0 && validationErrors.messages.length === 0 && (
+              <div className="solution-message">
+                For all we know, that's the solution!
+              </div>
+            )}
+          </div>
 
           <div className="input-section">
             <div className="button-container">

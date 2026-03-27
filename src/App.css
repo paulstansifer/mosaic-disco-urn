@@ -99,8 +99,27 @@ body {
   /* Reserve some space to avoid layout shifts */
 }
 
+.status-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+}
+
+.theory-of-ties-note {
+  color: black;
+  font-size: 0.9em;
+}
+
+.theory-link {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
 .solution-message {
   color: black;
+  font-weight: bold;
 }
 
 @keyframes destroy {
