@@ -507,11 +507,31 @@ function App() {
   };
 
   const handleWordCommit = (id: number | string) => {
-    const word = words.find(w => w.id === id);
+    const index = words.findIndex(w => w.id === id);
+    if (index === -1) return;
+    const word = words[index];
     if (word && word.text.trim().length === 0) {
       handleDestroyWord(id);
     } else {
       setWords(prev => prev.map(w => w.id === id ? { ...w, isEditing: false } : w));
+      setCaretIndex(index + 1);
+    }
+  };
+
+  const handleWordBackspaceEmpty = (id: number | string) => {
+    const wordIndex = words.findIndex(w => w.id === id);
+    if (wordIndex === -1) return;
+
+    const prevWordId = (wordIndex > 0) ? words[wordIndex - 1].id : null;
+    const isPrevFirstI = (wordIndex === 1 && words[0].text === 'I');
+
+    handleDestroyWord(id);
+
+    if (prevWordId && !isPrevFirstI) {
+      const prevWord = words[wordIndex - 1];
+      const newText = prevWord.text.slice(0, -1);
+      handleWordUpdate(prevWord.id, newText);
+      setWords(prev => prev.map(w => w.id === prevWordId ? { ...w, isEditing: true } : w));
     }
   };
 
@@ -580,14 +600,17 @@ function App() {
         setCaretIndex(prev => prev + 1);
       } else if (e.key === 'Backspace') {
         if (caretIndex > 0) {
-          const wordToDelete = words[caretIndex - 1];
-          if (wordToDelete) {
+          const wordToEdit = words[caretIndex - 1];
+          if (wordToEdit) {
             const index = caretIndex - 1;
-            const isFirstI = index === 0 && wordToDelete.text === 'I';
-            const isLastBang = index === words.length - 1 && wordToDelete.text === '!!';
+            const isFirstI = index === 0 && wordToEdit.text === 'I';
+            const isLastBang = index === words.length - 1 && wordToEdit.text === '!!';
 
             if (!isFirstI && !isLastBang) {
-              handleWordDelete(wordToDelete.id);
+              e.preventDefault();
+              const newText = wordToEdit.text.slice(0, -1);
+              handleWordUpdate(wordToEdit.id, newText);
+              setWords(prev => prev.map(w => w.id === wordToEdit.id ? { ...w, isEditing: true } : w));
             }
           }
         }
@@ -913,6 +936,7 @@ function App() {
               invalidIds={validationErrors.invalidIds}
               onWordUpdate={handleWordUpdate}
               onWordCommit={handleWordCommit}
+              onWordBackspaceEmpty={handleWordBackspaceEmpty}
             />
             <TrashDropZone />
           </div>
