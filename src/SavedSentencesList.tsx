@@ -23,7 +23,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSe
                 {sentences.map((sentence, index) => (
                     <li key={index} className="saved-sentence-item">
                         <a
-                            href={`#${encodeURIComponent(sentence.text)}`}
+                            href={`#${encodeURIComponent(sentence.text.replace(/!!$/, '').trim().replace(/ /g, '_'))}`}
                             className="saved-sentence-text"
                             onClick={() => {
                                 // We don't preventDefault here so the URL updates,
