@@ -161,7 +161,7 @@ function App() {
 
     if (window.location.hash) {
       try {
-        const decoded = decodeURIComponent(window.location.hash.substring(1));
+        const decoded = decodeURIComponent(window.location.hash.substring(1)).replace(/_/g, ' ');
         // Verify we can form this sentence
         let tempPool = INITIAL_POOL_SOURCE;
         let possible = true;
@@ -954,9 +954,25 @@ function App() {
   const handleShare = async () => {
     let sentenceText = words.map(w => w.text).join(' ').trim();
     sentenceText = sentenceText.replace(/\s+([,:]|!!)/g, '$1');
-    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(sentenceText)}`;
+    const shareText = sentenceText.replace(/!!$/, '').trim().replace(/ /g, '_');
+    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(shareText)}`;
     try {
-      await navigator.clipboard.writeText(url);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for environments without clipboard API or when it's not available
+        console.warn('Clipboard API not available');
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error('Failed to copy: ', err);
     }
