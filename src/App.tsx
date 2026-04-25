@@ -68,6 +68,16 @@ const updatePoolAdd = (pool: string, char: string) => {
   return pool.substring(0, index) + char + pool.substring(index + 1);
 };
 
+const maybeAddExclamationPoints = (sentence: string, pool: string) => {
+  const remaining = pool.replace(/ /g, '');
+  if (remaining.length > 0 && remaining.split('').every(c => c === '!')) {
+    if (sentence.endsWith('!!')) return sentence;
+    const needsSpace = !sentence.endsWith(' ') && !sentence.endsWith('!');
+    return sentence + (needsSpace ? ' ' : '') + remaining;
+  }
+  return sentence;
+};
+
 const canFormWord = (word: string, pool: string) => {
   const poolCounts: Record<string, number> = {};
   for (const char of pool) {
@@ -167,7 +177,7 @@ function App() {
         }
 
         if (possible) {
-          sentenceText = decoded;
+          sentenceText = maybeAddExclamationPoints(decoded, tempPool);
         }
       } catch (e) {
         console.error("Failed to parse initial sentence from hash", e);
@@ -891,7 +901,26 @@ function App() {
     });
 
     let tempPool = totalPool;
-    const newWordsList = newSentence.split(/((?:[,:]|!!|\s+))/).filter(w => w.trim().length > 0);
+    let finalSentence = newSentence;
+
+    // Preliminary check to see if we can form the original sentence
+    let prelimPool = totalPool;
+    let possible = true;
+    for (const char of newSentence) {
+      if (char === ' ') continue;
+      const res = updatePoolRemove(prelimPool, char);
+      if (res === null) {
+        possible = false;
+        break;
+      }
+      prelimPool = res;
+    }
+
+    if (possible) {
+      finalSentence = maybeAddExclamationPoints(newSentence, prelimPool);
+    }
+
+    const newWordsList = finalSentence.split(/((?:[,:]|!!|\s+))/).filter(w => w.trim().length > 0);
 
     for (const word of newWordsList) {
       for (const char of word) {
