@@ -15,12 +15,16 @@ import {
   useDroppable
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import allowedWordsRaw from './allowed_words.txt?raw';
 import allowedEndWordsRaw from './allowed_end_words.txt?raw';
 import LetterPool from './LetterPool';
 import SuggestionColumns from './SuggestionColumns';
 import SentenceBuilder from './SentenceBuilder';
 import SavedSentencesList, { type SavedSentence } from './SavedSentencesList';
+import LoginButton from './LoginButton';
+import { useAuth } from './AuthContext';
+import { db, isFirebaseConfigured } from './firebase';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
@@ -155,6 +159,7 @@ const getInsertionIndex = (currentWords: Array<{ id: number | string; text: stri
 };
 
 function App() {
+  const { user } = useAuth();
   const [initialState] = useState(() => {
     let currentPool = INITIAL_POOL_SOURCE;
     let sentenceText = INITIAL_SENTENCE_TEXT;
@@ -360,22 +365,51 @@ function App() {
     setSavedSentences(getSavedSentencesFromCookie());
   }, []);
 
+  useEffect(() => {
+    if (!user || !db) return;
+
+    const syncFromFirestore = async () => {
+      const docRef = doc(db!, 'users', user.uid);
+      const snap = await getDoc(docRef);
+      const firestoreSentences: SavedSentence[] = snap.exists()
+        ? (snap.data().sentences ?? [])
+        : [];
+
+      const localSentences = getSavedSentencesFromCookie();
+      const merged = [...firestoreSentences];
+      for (const s of localSentences) {
+        if (!merged.some(m => m.text === s.text)) {
+          merged.push(s);
+        }
+      }
+
+      setSavedSentences(merged);
+      saveSentencesToCookie(merged);
+      await setDoc(docRef, { sentences: merged });
+    };
+
+    syncFromFirestore().catch(console.error);
+  }, [user]);
+
+  const syncToFirestore = (sentences: SavedSentence[]) => {
+    if (!user || !db) return;
+    setDoc(doc(db!, 'users', user.uid), { sentences }).catch(console.error);
+  };
+
   const handleSaveSentence = () => {
     let sentenceText = words.map(w => w.text).join(' ').trim();
-    // Remove spaces before punctuation
     sentenceText = sentenceText.replace(/\s+([,:]|!!)/g, '$1');
 
     if (!sentenceText) return;
+    if (savedSentences.some(s => s.text === sentenceText)) return;
 
     const sortedPool = letterPool.replace(/ /g, '').split('').sort().join('');
+    const newEntry: SavedSentence = { text: sentenceText, pool: sortedPool };
+    const newSentences = [newEntry, ...savedSentences];
 
-    setSavedSentences(prev => {
-      if (prev.some(s => s.text === sentenceText)) return prev;
-      const newEntry: SavedSentence = { text: sentenceText, pool: sortedPool };
-      const newSentences = [newEntry, ...prev];
-      saveSentencesToCookie(newSentences);
-      return newSentences;
-    });
+    setSavedSentences(newSentences);
+    saveSentencesToCookie(newSentences);
+    syncToFirestore(newSentences);
   };
 
   const handleAddWord = () => {
@@ -944,11 +978,10 @@ function App() {
   };
 
   const handleDeleteSavedSentence = (sentenceToDelete: string) => {
-    setSavedSentences(prev => {
-      const newSentences = prev.filter(s => s.text !== sentenceToDelete);
-      saveSentencesToCookie(newSentences);
-      return newSentences;
-    });
+    const newSentences = savedSentences.filter(s => s.text !== sentenceToDelete);
+    setSavedSentences(newSentences);
+    saveSentencesToCookie(newSentences);
+    syncToFirestore(newSentences);
   };
 
   const handleShare = async () => {
@@ -1037,6 +1070,7 @@ function App() {
         onDragEnd={handleDragEnd}
       >
         <div className="content-wrapper">
+          {isFirebaseConfigured && <LoginButton />}
           <div className="main-sentence-row">
             <button className="add-word-side-btn" onClick={handleAddWord}>+</button>
             <SentenceBuilder
