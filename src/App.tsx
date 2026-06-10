@@ -1070,7 +1070,6 @@ function App() {
         onDragEnd={handleDragEnd}
       >
         <div className="content-wrapper">
-          {isFirebaseConfigured && <LoginButton />}
           <div className="main-sentence-row">
             <button className="add-word-side-btn" onClick={handleAddWord}>+</button>
             <SentenceBuilder
@@ -1138,6 +1137,7 @@ function App() {
             sentences={savedSentences}
             onDelete={handleDeleteSavedSentence}
             onSelect={handleLoadSentence}
+            authSection={isFirebaseConfigured ? <LoginButton /> : undefined}
           />
 
           <DragOverlay dropAnimation={dropAnimation}>
