@@ -1,0 +1,33 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sync": {
+      "$code": {
+        ".read": "auth != null && $code.matches(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/)",
+        "createdAt": {
+          ".write": "auth != null && !data.exists() && $code.matches(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/)",
+          ".validate": "newData.isNumber()"
+        },
+        "sentences": {
+          "$key": {
+            ".write": "auth != null && $code.matches(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/)",
+            ".validate": "newData.hasChildren(['text', 'pool', 'savedAt'])",
+            "text": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+            },
+            "pool": {
+              ".validate": "newData.isString() && newData.val().length <= 110"
+            },
+            "savedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

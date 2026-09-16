@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import './App.css';
 import {
   DndContext,
@@ -21,6 +21,9 @@ import LetterPool from './LetterPool';
 import SuggestionColumns from './SuggestionColumns';
 import SentenceBuilder from './SentenceBuilder';
 import SavedSentencesList, { type SavedSentence } from './SavedSentencesList';
+import SyncPanel from './SyncPanel';
+import { formatSyncCode, generateSyncCode, isFirebaseConfigured, normalizeSyncCode, stampSavedAt } from './syncCode';
+import type { SyncHandle, SyncStatus } from './sync';
 
 const ALLOWED_WORDS = allowedWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
 const ALLOWED_END_WORDS = allowedEndWordsRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
@@ -93,38 +96,69 @@ const canFormWord = (word: string, pool: string) => {
   return true;
 };
 
-const COOKIE_NAME = 'mosaic_saved_sentences';
+const SENTENCES_KEY = 'mosaic_saved_sentences';
+const SYNC_CODE_KEY = 'mosaic_sync_code';
+const SYNC_LAST_KEY = 'mosaic_sync_last';
 
-const getSavedSentencesFromCookie = (): SavedSentence[] => {
+const parseSentences = (json: string | null): SavedSentence[] | null => {
+  if (!json) return null;
   try {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${COOKIE_NAME}=`);
-    if (parts.length === 2) {
-      const cookieVal = parts.pop()?.split(';').shift();
-      if (cookieVal) {
-        const parsed = JSON.parse(decodeURIComponent(cookieVal));
-        if (Array.isArray(parsed)) {
-          return parsed.map((item: any) => {
-            if (typeof item === 'string') {
-              return { text: item, pool: '' };
-            }
-            return item;
-          });
-        }
-      }
-    }
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) return null;
+    // Very old entries were stored as bare strings.
+    return parsed.map((item: any) => typeof item === 'string' ? { text: item, pool: '' } : item);
   } catch (e) {
-    console.error("Failed to parse saved sentences cookie", e);
+    console.error("Failed to parse saved sentences", e);
+    return null;
   }
-  return [];
 };
 
-const saveSentencesToCookie = (sentences: SavedSentence[]) => {
-  const d = new Date();
-  d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year
-  const expires = "expires=" + d.toUTCString();
-  const value = encodeURIComponent(JSON.stringify(sentences));
-  document.cookie = COOKIE_NAME + "=" + value + ";" + expires + ";path=/";
+// Sentences used to live in a cookie, which holds about 4KB: roughly 20 sentences, and fewer once
+// syncing merges several devices' lists. Writes past that limit fail silently, so they now live in
+// localStorage (megabytes), and the cookie is read once to carry existing sentences over.
+const getSavedSentencesFromCookie = (): SavedSentence[] | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${SENTENCES_KEY}=`);
+  if (parts.length !== 2) return null;
+  const cookieVal = parts.pop()?.split(';').shift();
+  if (!cookieVal) return null;
+  return parseSentences(decodeURIComponent(cookieVal));
+};
+
+/**
+ * Loads the saved sentences, migrating from the cookie and giving a timestamp to sentences saved
+ * before sync existed. Without one, the merge can't tell an old sentence from one the server has
+ * already seen, and would silently drop it.
+ */
+const loadSavedSentences = (): SavedSentence[] => {
+  const stored = parseSentences(readLocalStorage(SENTENCES_KEY));
+  const sentences = stored ?? getSavedSentencesFromCookie() ?? [];
+  const stamped = stampSavedAt(sentences);
+
+  // Persist if anything changed shape, so the migration only happens once.
+  if (stamped || !stored) saveSentences(stamped ?? sentences);
+  return stamped ?? sentences;
+};
+
+const saveSentences = (sentences: SavedSentence[]) => {
+  writeLocalStorage(SENTENCES_KEY, JSON.stringify(sentences));
+};
+
+const readLocalStorage = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeLocalStorage = (key: string, value: string | null) => {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch (e) {
+    console.error(`Failed to write ${key} to localStorage`, e);
+  }
 };
 
 function TrashDropZone() {
@@ -142,6 +176,13 @@ function TrashDropZone() {
     </div>
   );
 }
+
+// True while a text field has focus, such as the sync code box, so the sentence-building key and
+// paste handlers leave those keystrokes alone.
+const isTypingInField = () => {
+  const active = document.activeElement;
+  return active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+};
 
 const getInsertionIndex = (currentWords: Array<{ id: number | string; text: string; isEditing?: boolean; isDestroyed?: boolean }>) => {
   const bangIndex = currentWords.findIndex(w => w.text === "!!");
@@ -357,8 +398,102 @@ function App() {
   }, [letterPool, words]);
 
   useEffect(() => {
-    setSavedSentences(getSavedSentencesFromCookie());
+    setSavedSentences(loadSavedSentences());
   }, []);
+
+  // Re-checked on load, so a code in an old format is dropped rather than failing against the rules.
+  const [syncCode, setSyncCode] = useState<string | null>(
+    () => isFirebaseConfigured ? normalizeSyncCode(readLocalStorage(SYNC_CODE_KEY) ?? '') : null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const syncRef = useRef<SyncHandle | null>(null);
+  // Saves and deletes made while `import('./sync')` is still in flight. A dropped delete would be
+  // worse than a dropped save: the server still has the sentence, so the first snapshot would put
+  // it back.
+  const syncQueueRef = useRef<Array<(handle: SyncHandle) => void>>([]);
+
+  const withSync = (op: (handle: SyncHandle) => void) => {
+    if (syncRef.current) op(syncRef.current);
+    else if (syncCode) syncQueueRef.current.push(op);
+  };
+
+  useEffect(() => {
+    if (!syncCode) return;
+    let cancelled = false;
+    // Absent until the server has confirmed this device's sentences at least once, so a join that
+    // failed (or never finished) still uploads everything on the next attempt.
+    const lastSyncedAt = Number(readLocalStorage(SYNC_LAST_KEY) ?? 0);
+    setSyncStatus({ state: 'connecting' });
+
+    import('./sync').then(({ startSync }) => {
+      if (cancelled) return;
+      const handle = startSync(syncCode, {
+        // Storage always mirrors `savedSentences`, and is populated before the first snapshot arrives.
+        getLocal: loadSavedSentences,
+        lastSyncedAt,
+        isFirstJoin: lastSyncedAt === 0,
+        onRemote: sentences => {
+          setSavedSentences(sentences);
+          saveSentences(sentences);
+        },
+        onStatus: setSyncStatus,
+        onSyncedAt: time => writeLocalStorage(SYNC_LAST_KEY, String(time)),
+      });
+      syncRef.current = handle;
+      // Flush before the first snapshot can arrive, so queued deletes aren't undone by it.
+      syncQueueRef.current.splice(0).forEach(op => op(handle));
+    }).catch(e => {
+      console.error('Failed to load sync module', e);
+      if (!cancelled) setSyncStatus({ state: 'error', message: 'Failed to load sync code' });
+    });
+
+    return () => {
+      cancelled = true;
+      syncRef.current?.stop();
+      syncRef.current = null;
+      syncQueueRef.current = [];
+    };
+  }, [syncCode]);
+
+  const beginSync = (code: string) => {
+    writeLocalStorage(SYNC_CODE_KEY, code);
+    writeLocalStorage(SYNC_LAST_KEY, null);
+    setSyncCode(code);
+  };
+
+  // These reject with the message the panel shows, so Firebase stays out of the panel.
+  const handleCreateCode = async () => {
+    const code = generateSyncCode();
+    try {
+      const { claimCode } = await import('./sync');
+      await claimCode(code);
+    } catch (e) {
+      console.error('Failed to claim a sync code', e);
+      throw new Error("Couldn't set up a code. Are you online?");
+    }
+    beginSync(code);
+  };
+
+  const handleJoinCode = async (code: string) => {
+    let exists: boolean;
+    try {
+      const { codeExists } = await import('./sync');
+      exists = await codeExists(code);
+    } catch (e) {
+      console.error('Failed to look up sync code', e);
+      throw new Error("Couldn't check that code. Are you online?");
+    }
+    if (!exists) {
+      throw new Error(`${formatSyncCode(code)} isn't a valid code.`);
+    }
+    beginSync(code);
+  };
+
+  const handleStopSyncing = () => {
+    writeLocalStorage(SYNC_CODE_KEY, null);
+    writeLocalStorage(SYNC_LAST_KEY, null);
+    setSyncCode(null);
+    setSyncStatus(null);
+  };
 
   const handleSaveSentence = () => {
     let sentenceText = words.map(w => w.text).join(' ').trim();
@@ -366,16 +501,18 @@ function App() {
     sentenceText = sentenceText.replace(/\s+([,:]|!!)/g, '$1');
 
     if (!sentenceText) return;
+    if (savedSentences.some(s => s.text === sentenceText)) return;
 
     const sortedPool = letterPool.replace(/ /g, '').split('').sort().join('');
+    const newEntry: SavedSentence = { text: sentenceText, pool: sortedPool, savedAt: Date.now() };
 
     setSavedSentences(prev => {
       if (prev.some(s => s.text === sentenceText)) return prev;
-      const newEntry: SavedSentence = { text: sentenceText, pool: sortedPool };
       const newSentences = [newEntry, ...prev];
-      saveSentencesToCookie(newSentences);
+      saveSentences(newSentences);
       return newSentences;
     });
+    withSync(handle => handle.save(newEntry));
   };
 
   const handleAddWord = () => {
@@ -656,7 +793,7 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isEditingAny = words.some(w => w.isEditing);
-      if (isEditingAny) return;
+      if (isEditingAny || isTypingInField()) return;
 
       if (e.key === 'Enter') {
         setLetterPool(prev => shuffleString(prev.replace(/ /g, '')));
@@ -718,10 +855,7 @@ function App() {
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
-        return;
-      }
+      if (isTypingInField()) return;
 
       e.preventDefault();
       const text = e.clipboardData?.getData('text');
@@ -946,9 +1080,10 @@ function App() {
   const handleDeleteSavedSentence = (sentenceToDelete: string) => {
     setSavedSentences(prev => {
       const newSentences = prev.filter(s => s.text !== sentenceToDelete);
-      saveSentencesToCookie(newSentences);
+      saveSentences(newSentences);
       return newSentences;
     });
+    withSync(handle => handle.remove(sentenceToDelete));
   };
 
   const handleShare = async () => {
@@ -1104,6 +1239,15 @@ function App() {
             sentences={savedSentences}
             onDelete={handleDeleteSavedSentence}
             onSelect={handleLoadSentence}
+            syncPanel={isFirebaseConfigured ? (
+              <SyncPanel
+                syncCode={syncCode}
+                status={syncStatus}
+                onCreate={handleCreateCode}
+                onJoin={handleJoinCode}
+                onStop={handleStopSyncing}
+              />
+            ) : undefined}
           />
 
           <DragOverlay dropAnimation={dropAnimation}>

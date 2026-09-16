@@ -3,22 +3,26 @@ import React from 'react';
 export interface SavedSentence {
     text: string;
     pool: string;
+    // Milliseconds since the epoch; absent for sentences saved before sync existed.
+    savedAt?: number;
 }
 
 interface SavedSentencesListProps {
     sentences: SavedSentence[];
     onSelect: (sentence: string) => void;
     onDelete: (sentence: string) => void;
+    syncPanel?: React.ReactNode;
 }
 
-const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSelect, onDelete }) => {
-    if (sentences.length === 0) {
+const SavedSentencesList: React.FC<SavedSentencesListProps> = ({ sentences, onSelect, onDelete, syncPanel }) => {
+    if (sentences.length === 0 && !syncPanel) {
         return null;
     }
 
     return (
         <div className="saved-sentences-container">
             <h3>Saved Sentences</h3>
+            {syncPanel}
             <ul className="saved-sentences-list">
                 {sentences.map((sentence, index) => (
                     <li key={index} className="saved-sentence-item">

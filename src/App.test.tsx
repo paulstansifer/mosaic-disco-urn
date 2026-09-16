@@ -120,3 +120,48 @@ describe('Validation Rules', () => {
         expect(screen.getByText("The last word must end in 'w'.")).toBeInTheDocument();
     });
 });
+
+describe('Saved sentence storage', () => {
+    /**
+     * @vitest-environment jsdom
+     * @description Sentences used to live in a cookie, which is too small for synced lists; they
+     * must carry over to localStorage on first load, keeping their text and pool.
+     */
+    it('migrates saved sentences from the cookie to localStorage', () => {
+        const legacy = [{ text: 'I am a saved sentence!!', pool: 'abc' }];
+        document.cookie = `mosaic_saved_sentences=${encodeURIComponent(JSON.stringify(legacy))};path=/`;
+        localStorage.removeItem('mosaic_saved_sentences');
+
+        render(<App />);
+
+        expect(screen.getByText('I am a saved sentence!!')).toBeInTheDocument();
+        const stored = JSON.parse(localStorage.getItem('mosaic_saved_sentences')!);
+        // Undated sentences are stamped so the sync merge can tell them apart from synced ones.
+        expect(stored).toEqual([{ text: 'I am a saved sentence!!', pool: 'abc', savedAt: 0 }]);
+
+        document.cookie = 'mosaic_saved_sentences=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        localStorage.removeItem('mosaic_saved_sentences');
+    });
+});
+
+describe('Sync code field', () => {
+    /**
+     * @vitest-environment jsdom
+     * @description The global key handler builds the sentence from bare keystrokes, so it must
+     * keep its hands off keys typed into the sync code field.
+     */
+    it('does not build the sentence while typing a sync code', async () => {
+        const user = userEvent.setup();
+        const { container } = render(<App />);
+
+        await user.click(screen.getByRole('button', { name: 'Sync with another device' }));
+        const field = screen.getByLabelText('Sync code');
+        // 'a' and 't' are in the letter pool, and a space normally starts a new word.
+        await user.type(field, 'k7q m3x');
+
+        expect(field).toHaveValue('k7q m3x');
+        // The row also holds the caret marker, so compare just the sentence characters.
+        const sentence = container.querySelector('.word-row')?.textContent?.replace(/[^A-Za-z!,:]/g, '');
+        expect(sentence).toBe('I!!');
+    });
+});
