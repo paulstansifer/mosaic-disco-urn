@@ -177,6 +177,22 @@ function TrashDropZone() {
   );
 }
 
+const STALE_PAGE_MESSAGE = 'Could not load syncing. Reload the page and try again.';
+
+/**
+ * Loads the sync code on demand. The usual reason this fails is a page left open across a deploy,
+ * asking for a chunk that no longer exists, which a reload fixes. Reloading here would throw away
+ * the sentence being built, so tell the user instead.
+ */
+const loadSyncModule = async () => {
+  try {
+    return await import('./sync');
+  } catch (e) {
+    console.error('Failed to load the sync module', e);
+    throw new Error(STALE_PAGE_MESSAGE);
+  }
+};
+
 // True while a text field has focus, such as the sync code box, so the sentence-building key and
 // paste handlers leave those keystrokes alone.
 const isTypingInField = () => {
@@ -247,7 +263,7 @@ function App() {
   const [letterPool, setLetterPool] = useState(initialState.pool);
   const [deletedWords, setDeletedWords] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<number | string | null>(null);
-  const [savedSentences, setSavedSentences] = useState<SavedSentence[]>([]);
+  const [savedSentences, setSavedSentences] = useState<SavedSentence[]>(loadSavedSentences);
   const [validationErrors, setValidationErrors] = useState<{ messages: string[], invalidIds: Set<number | string> }>({ messages: [], invalidIds: new Set() });
   const [hasInteracted, setHasInteracted] = useState(false);
   const [caretIndex, setCaretIndex] = useState<number>(() => getInsertionIndex(initialState.words));
@@ -397,10 +413,6 @@ function App() {
     }
   }, [letterPool, words]);
 
-  useEffect(() => {
-    setSavedSentences(loadSavedSentences());
-  }, []);
-
   // Re-checked on load, so a code in an old format is dropped rather than failing against the rules.
   const [syncCode, setSyncCode] = useState<string | null>(
     () => isFirebaseConfigured ? normalizeSyncCode(readLocalStorage(SYNC_CODE_KEY) ?? '') : null);
@@ -422,9 +434,8 @@ function App() {
     // Absent until the server has confirmed this device's sentences at least once, so a join that
     // failed (or never finished) still uploads everything on the next attempt.
     const lastSyncedAt = Number(readLocalStorage(SYNC_LAST_KEY) ?? 0);
-    setSyncStatus({ state: 'connecting' });
 
-    import('./sync').then(({ startSync }) => {
+    loadSyncModule().then(({ startSync }) => {
       if (cancelled) return;
       const handle = startSync(syncCode, {
         // Storage always mirrors `savedSentences`, and is populated before the first snapshot arrives.
@@ -441,9 +452,8 @@ function App() {
       syncRef.current = handle;
       // Flush before the first snapshot can arrive, so queued deletes aren't undone by it.
       syncQueueRef.current.splice(0).forEach(op => op(handle));
-    }).catch(e => {
-      console.error('Failed to load sync module', e);
-      if (!cancelled) setSyncStatus({ state: 'error', message: 'Failed to load sync code' });
+    }).catch(() => {
+      if (!cancelled) setSyncStatus({ state: 'error', message: STALE_PAGE_MESSAGE });
     });
 
     return () => {
@@ -458,13 +468,15 @@ function App() {
     writeLocalStorage(SYNC_CODE_KEY, code);
     writeLocalStorage(SYNC_LAST_KEY, null);
     setSyncCode(code);
+    // No status until the session reports one; the panel reads that as "connecting…".
+    setSyncStatus(null);
   };
 
   // These reject with the message the panel shows, so Firebase stays out of the panel.
   const handleCreateCode = async () => {
     const code = generateSyncCode();
+    const { claimCode } = await loadSyncModule();
     try {
-      const { claimCode } = await import('./sync');
       await claimCode(code);
     } catch (e) {
       console.error('Failed to claim a sync code', e);
@@ -474,9 +486,9 @@ function App() {
   };
 
   const handleJoinCode = async (code: string) => {
+    const { codeExists } = await loadSyncModule();
     let exists: boolean;
     try {
-      const { codeExists } = await import('./sync');
       exists = await codeExists(code);
     } catch (e) {
       console.error('Failed to look up sync code', e);

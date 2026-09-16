@@ -37,3 +37,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          # Leave previous builds' hashed assets in place. index.html is overwritten either way, but
+          # a page already open when a deploy lands still loads the chunks it was built against,
+          # instead of getting a 404 for something like assets/sync-C5hll9jm.js.
+          keep_files: true
