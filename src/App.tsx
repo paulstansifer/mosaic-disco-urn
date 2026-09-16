@@ -1197,7 +1197,7 @@ function App() {
             {isConsistentWithTheoryOfTies && (
               <div className="theory-of-ties-note">
                 Consistent with the {' '}
-                <span className="theory-link" title="The 'theory of ties' suggests that for each letter frequency group in the original pool, the first appearance of each letter in the sentence should follow their relative order in that original string.">
+                <span className="theory-link" title="Some of the commentators on Ell Bradshaw's site observed that in '12t10o8e7a6l6n6u5i5s5d5h5y3I3r3fbbwwkcmvg', there's no obvious reason why the letters that appear the same number of times are listed in the order they appear (like '3I3r3f') and hypothesized that they're ordered by first appearance.">
                   'theory of ties'
                 </span>.
               </div>
